@@ -1,15 +1,16 @@
 function [omega, accel, gps, sig, gt] = getZurichData()
 %% Reads in the Zurich Urban IMU, Gyro, and GPS data interpolating time stamps
 
-% general comments, this data set has some issues with units. Their ground
-% truth
-    GPSfile =  '/Users/test/Downloads/AGZ_subset/Log Files/OnboardGPS.csv';
-    IMUfile = '/Users/test/Downloads/AGZ_subset/Log Files/RawAccel.csv';
-    Gyrofile = '/Users/test/Downloads/AGZ_subset/Log Files/RawGyro.csv';
-    GTfile = '/Users/test/Downloads/AGZ_subset/Log Files/GroundTruthAGL.csv';
+    % general comments, this data set has some issues with units.
+    % Their ground truth
+    data_root = '/media/chengjia/h2/data/zurich/AGZ_subset';
+    GPSfile =  fullfile(data_root, 'Log Files/OnboardGPS.csv');
+    IMUfile = fullfile(data_root, 'Log Files/RawAccel.csv');
+    Gyrofile = fullfile(data_root, 'Log Files/RawGyro.csv');
+    GTfile = fullfile(data_root, 'Log Files/GroundTruthAGL.csv');
 
     
-%%    
+    %%    
     % The following (commented) section should give us the xyz coordinates of
     % the latitude/longitude/altitude but doesn't quite line up with the "true
     % pose" gps data - so we use that instead.
@@ -23,17 +24,17 @@ function [omega, accel, gps, sig, gt] = getZurichData()
     % x = r*sin(x1*pi/180).*sin(y1*pi/180); x = x-x(1);
     % z = z - z(1);
 
-%% Get Gyro data
+    %% Get Gyro data
     d2 = readmatrix(Gyrofile);
     t = d2(:,1); tstart = t(1);
     t = (t-tstart)/10^6;
     omega = makeDataStruct(t,d2,[3,4,5],tstart);
 
-%% Get IMU data
+    %% Get IMU data
     d3 = readmatrix(IMUfile);
     accel = makeDataStruct(t,d3,[3,4,5],tstart);
 
-%% Get Ground truth
+    %% Get Ground truth
     d4 = readmatrix(GTfile);
     xgt = d4(:,2); xgt = xgt-xgt(1);
     ygt = d4(:,3); ygt = ygt-ygt(1);

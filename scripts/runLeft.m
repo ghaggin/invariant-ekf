@@ -30,7 +30,7 @@ for i = 2:N-1
         fprintf('iteration: %d/%d\n',i,N);
         if(plot_progress)
             p = filter.mu(1:3,5);
-            plot3(p(1),p(2),p(3),'ro'); hold on;
+            plot3(p(1),p(2),p(3),'r.'); hold on;
             plot3(gt.x(i), gt.y(i), gt.z(i),'.b') %'Color', [0.5,0.5,0.5]);
             plot3(gps.x(i), gps.y(i), gps.z(i),'.k')
         end
@@ -54,8 +54,10 @@ subplot(3,1,3)
 plot(omega.t,[gps.z;X(3,:);gt.z]); hold on;
 legend('GPS','Estimate', 'GT');
 
-figure(1);
-plot3(gps.x,gps.y,gps.z); hold on;
-plot3(X(1,:),X(2,:),X(3,:));
-plot3(gt.x, gt.y, gt.z);
+figure(3);
+hold on;
+plot3(gps.x,gps.y,gps.z, 'g.'); 
+plot3(X(1,:),X(2,:),X(3,:), 'k.');
+plot3(gt.x, gt.y, gt.z, 'r.');
 legend('GPS','Estimate', 'GT');
+axis('equal');
