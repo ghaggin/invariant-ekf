@@ -1,7 +1,7 @@
 ---
 BasedOnStyle: Google
 BreakBeforeBraces: Allman
-ColumnLimit: '100'
+ColumnLimit: '80'
 Cpp11BracedListStyle: 'true'
 IndentWidth: '4'
 Language: Cpp
