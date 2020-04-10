@@ -12,7 +12,7 @@ target_add_test_case(test_example test_example.cpp)
 target_link_libraries(test_example example)
 
 # Add a test case with no associated library and no link libraries
-target_add_test_case(test_sophus test_sophus.cpp)
+# target_add_test_case(test_sophus test_sophus.cpp)
 # ##############################################################################
 
 # ##############################################################################
@@ -21,4 +21,13 @@ target_add_test_case(test_sophus test_sophus.cpp)
 add_library(iekf SHARED src/IEKF.cpp)
 target_add_test_case(test_iekf test_iekf.cpp)
 target_link_libraries(test_iekf iekf)
+
 # ##############################################################################
+# DataLoader
+# ##############################################################################
+add_library(DataLoader SHARED src/DataLoader.cpp)
+
+# ##############################################################################
+# Add a test case with no associated library
+# and no link libraries
+# target_add_test_case(test_sophus test_sophus.cpp)
