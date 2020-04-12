@@ -27,7 +27,5 @@ target_link_libraries(test_iekf iekf)
 # ##############################################################################
 add_library(DataLoader SHARED src/DataLoader.cpp)
 
-# ##############################################################################
-# Add a test case with no associated library
-# and no link libraries
-# target_add_test_case(test_sophus test_sophus.cpp)
+add_executable(test_data src/test_data_loader.cpp)
+target_link_libraries(test_data DataLoader)

@@ -23,61 +23,70 @@ DataLoader::DataLoader(string data_dir) {
     string gyro_fn {data_dir + "/Log Files/RawGyro.csv"};
     string gt_fn {data_dir + "/Log Files/GroundTruthAGL.csv"};
 
-
-    imu = parse_imu(imu_fn);
-    gyro = parse_imu(gyro_fn);
-    gps = parse_gps(gt_fn);
+    parse_raw(imu_fn, imu);
+    parse_raw(gyro_fn, gyro);
+    parse_gps_gt(gt_fn);
 
     cout << imu.size() << endl;
     cout << gyro.size() << endl;
     cout << gps.size() << endl;
+    cout << gt.size() << endl;
+
+    std::for_each(gps.rbegin(), gps.rend(), [this](auto& in){
+        in.second -= gps.begin()->second;
+    });
+
+    std::for_each(gt.rbegin(), gt.rend(), [this](auto& in){
+        in.second -= gt.begin()->second;
+    });
 }
 
-std::map<timestamp, Vector3d> DataLoader::parse_gps(string fn){
+void DataLoader::parse_gps_gt(string fn){
     ifstream gps_in(fn);
     assert(gps_in.is_open());
 
     string temp;
     getline(gps_in, temp);
 
-    std::map<timestamp, Vector3d> umap;
-    
     while (getline(gps_in, temp)) {
-        umap.insert(parse_gps_line(temp));
+        size_t ts;
+        Vector3d gt_vec, gps_vec;
+        std::tie(ts, gt_vec, gps_vec) = parse_gps_gt_line(temp);
+
+        gt.insert(std::make_pair(ts, gt_vec));
+        gps.insert(std::make_pair(ts, gps_vec));
     }
 
-    return umap;
 }
 
-std::pair<timestamp, Eigen::Vector3d> DataLoader::parse_gps_line(string line){
+std::tuple<size_t, Vector3d, Vector3d> DataLoader::parse_gps_gt_line(string line) {
     unsigned long long ts;
-    double lat, lon, alt;
-   
-    sscanf(line.c_str(), "%llu, %*u, %lf, %lf, %lf, %*s", &ts, &lat, &lon, &alt);
+    double gtx, gty, gtz, gpsx, gpsy, gpsz;
 
-    timestamp ti {std::chrono::microseconds(ts)};
-    Vector3d gps {lat, lon, alt};
+    sscanf(line.c_str(), "%llu,%lf,%lf,%lf,%*f,%*f,%*f,%lf,%lf,%lf,%*s",
+        &ts, &gpsx, &gpsy, &gpsz, &gtx, &gty, &gtz);
 
-    return std::make_pair(ti, gps);
+    Vector3d gt {gtx, gty, gtz};
+    Vector3d gps {gpsx, gpsy, gpsz};
+
+    return std::tie(ts, gt, gps);
 }
 
-std::map<timestamp, Vector3d> DataLoader::parse_imu(string fn){
+void DataLoader::parse_raw(string fn,
+    std::map<Timestamp, Eigen::Vector3d> &map_data){
+
     ifstream imu_in(fn);
     assert(imu_in.is_open());
 
     string temp;
     getline(imu_in, temp);
 
-    std::map<timestamp, Vector3d> umap;
-    
     while (getline(imu_in, temp)) {
-        umap.insert(parse_imu_line(temp));
+        map_data.insert(parse_raw_line(temp));
     }
-
-    return umap;
 }
 
-std::pair<timestamp, Eigen::Vector3d> DataLoader::parse_imu_line(string line){
+std::pair<timestamp, Eigen::Vector3d> DataLoader::parse_raw_line(string line){
     unsigned long long ts;
     double x, y, z;
    
