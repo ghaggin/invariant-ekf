@@ -1,8 +1,77 @@
-clear; close all; format compact;
+% Generates a fake data set to use for testing and analysis.
+% Right now the function make perfect data based on grouth
+% truth positions that are polynomial functions of time.
+%
+% TODO:
+%   - Return data form (same as zurich?)
+%   - Noise
+%   - Biases
+%   - Assynchronous measurements
+function [omega, accel, gps, sig, gt] = gen_fake_data()
 
-wf_data = generate_world_frame()
+    %----------------------------------------------
+    % Get the world frame data, see 
+    % comment above function for details
+    wf_data = generate_world_frame();
+    %----------------------------------------------
 
-% wf_data = {t, pos, vel, acc, R, omega}
+    %----------------------------------------------
+    % Make the body frame data
+    %
+    % Define an east-north-up coordinate system
+    % with an origin at lla cordinates.
+    % ENU -> x = east, y = north, z = up
+    origin = [0;0;0];
+
+    % Acceration measured by the acclerometer
+    % due to local gravity.  The acclerometer
+    % can't tell the difference between experiencing
+    % an upward acceleration vs. a gravitational field
+    % pulling it down (picture a mass suspended by springs)
+    ag = [0;0;9.81];
+
+    % Acceleration as measured by the accelerometer is
+    % the world frame acceleration plus gravity accel
+    % rotated into the body frame by R
+    acc = zeros(3, size(wf_data.acc, 2));
+    for i = 1:size(acc, 2)
+        acc(:,i) = wf_data.R{i} * (wf_data.acc(:,i) + ag);
+    end
+
+    % Set the measured rates to the generated 
+    % angular rates
+    omega = wf_data.omega;
+
+    % Set the ground truth as the generated position
+    gt = wf_data.pos;
+
+    % Convert ENU coordinates to GPS coordinates
+    E = wgs84Ellipsoid();
+    gps = zeros(3, size(wf_data.acc, 2));
+    for i = 1:size(gps, 2)
+        [lat, long, alt] = enu2geodetic(gt(1,i), gt(2,i), gt(3,i), origin(1), origin(2), origin(3), E);
+        gps(:,i) = [lat;long;alt];
+    end
+    %----------------------------------------------
+
+    %----------------------------------------------
+    %TODO: convert body frame data into same form as
+    %      zurich data
+    %----------------------------------------------
+
+end
+
+
+% Generate random world frame data
+%   - Randomly generate polynomial for 
+%     each state and its derivatives
+%   - Generate a time series of discrete
+%     measurements
+%   - Evaluate the polynomial for each time
+%     and return that data
+%
+% Returns:
+%   wf_data = {t, pos, vel, acc, R, omega}
 function wf_data = generate_world_frame()
     tmin = 0;
     tmax = 10;
@@ -107,12 +176,14 @@ function ux = skew(u)
     ];
 end
 
+% Undo skew operator
 function u = unskew(ux)
     u(3,1) = -ux(1,2);
     u(2,1) = ux(1,3);
     u(1,1) = -ux(2,3);
 end
 
+% Log mapping from SE(3) -> R^3
 function w = Log(R)
     w = unskew(logm(R));
 end
