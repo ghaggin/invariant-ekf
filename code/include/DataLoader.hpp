@@ -9,6 +9,23 @@ class DataLoader {
 public:
     using Timestamp = std::chrono::time_point<std::chrono::system_clock,
         std::chrono::duration<double>>;
+
+    enum struct DataType {
+        imu,
+        gyro,
+        gps,
+        gt
+    };
+
+    struct Data {
+        Timestamp ts;
+        DataType dt;
+        Eigen::Vector3d datum;
+
+        Data(Timestamp ts_, DataType dt_, Eigen::Vector3d datum_) : 
+            ts(ts_), dt(dt_), datum(datum_) {}
+    };
+
 public:
     DataLoader(std::string data_dir);
 
@@ -25,6 +42,6 @@ private:
 private:
     std::map<Timestamp, Eigen::Vector3d> imu;
     std::map<Timestamp, Eigen::Vector3d> gyro;
-    std::map<size_t, Eigen::Vector3d> gps;
-    std::map<size_t, Eigen::Vector3d> gt;
+    std::map<Timestamp, Eigen::Vector3d> gps;
+    //std::map<size_t, Eigen::Vector3d> gt;
 };
