@@ -19,9 +19,10 @@ classdef LIEKF < handle
     end
     methods
         function obj = LIEKF
-            R =     [0.4347   -0.7909   -0.4307
-                    -0.6604    0.0452   -0.7495
-                    0.6123    0.6102   -0.5027]; %???initial rotation matrix              
+%             R =     [0.4347   -0.7909   -0.4307
+%                     -0.6604    0.0452   -0.7495
+%                     0.6123    0.6102   -0.5027]; %???initial rotation matrix              
+            R = eye(3);
             obj.mu = blkdiag(R,eye(2));
             obj.Sigma = eye(15); %TBT
             obj.bias = zeros(6,1);
@@ -30,9 +31,10 @@ classdef LIEKF < handle
             obj.cov_a = eye(3);
             obj.cov_gb = eye(3);
             obj.cov_ab = eye(3);
-            obj.V = [4.6778    1.9437    1.3148 % Covariance of observation noise (see getZurichData.m)
-                    1.9437   11.5621    6.9711
-                    1.3148    6.9711   43.9883]; 
+%             obj.V = [4.6778    1.9437    1.3148 % Covariance of observation noise (see getZurichData.m)
+%                     1.9437   11.5621    6.9711
+%                     1.3148    6.9711   43.9883]; 
+            obj.V = eye(3);
             obj.Q = blkdiag([obj.cov_g,zeros(3),zeros(3),zeros(3),zeros(3);
                              zeros(3),obj.cov_a,zeros(3),zeros(3),zeros(3);
                              zeros(3),zeros(3),eye(3),zeros(3),zeros(3);
@@ -80,7 +82,7 @@ classdef LIEKF < handle
                 
         function correction(obj,GPS)    %GPS 3X1
             Y = [GPS;0;1];
-            H = [zeros(3),zeros(3), ones(3), zeros(3), zeros(3)];
+            H = [zeros(3),zeros(3), eye(3), zeros(3), zeros(3)];
             R = obj.mu(1:3,1:3);
             N = R' * obj.V * R;
             
