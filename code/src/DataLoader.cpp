@@ -14,106 +14,70 @@ using std::make_pair;
 using std::for_each;
 using Eigen::Vector3d;
 
-//#include <boost/tokenizer.hpp>
-// using boost::tokenizer;
-// using boost::escaped_list_separator;
-
 DataLoader::DataLoader(string data_dir) {
-    string imu_fn {data_dir + "/Log Files/RawAccel.csv"};
-    string gyro_fn {data_dir + "/Log Files/RawGyro.csv"};
-    string gt_fn {data_dir + "/Log Files/GroundTruthAGL.csv"};
+    string pose_fn {data_dir + "/Log Files/OnboardPose.csv"};
     string gps_fn {data_dir + "/Log Files/OnboardGPS.csv"};
 
-    parse_raw(imu_fn, imu);
-    parse_raw(gyro_fn, gyro);
-    parse_raw(gps_fn, gps);
-    // parse_gps_gt(gt_fn);
+    parse_raw(pose_fn);
+    parse_gps(gps_fn);
 
-    cout << imu.size() << endl;
-    cout << gyro.size() << endl;
-    cout << gps.size() << endl;
-    // cout << gt.size() << endl;
-
-    /*
-    std::for_each(gps.rbegin(), gps.rend(), [this](auto& in){
-        in.second -= gps.begin()->second;
-    });
-
-    std::for_each(gt.rbegin(), gt.rend(), [this](auto& in){
-        in.second -= gt.begin()->second;
-    });
-    */
-
-    auto make_data = [](Timestamp ts, DataType dt, Vector3d datum){
-        return make_pair(ts, Data(ts, dt, datum));};
-
-    std::multimap<Timestamp, DataLoader::Data> am;
-
-    for_each(gps.begin(), gps.end(), [this, &am, make_data](auto& in) {
-        am.insert(make_data(in.first, DataType::gps, in.second));});
-
-    for_each(gyro.begin(), gyro.end(), [this, &am, make_data](auto& in) {
-        am.insert(make_data(in.first, DataType::gyro, in.second));});
-    
-    for_each(imu.begin(), imu.end(), [this, &am, make_data](auto& in) {
-        am.insert(make_data(in.first, DataType::imu, in.second));});
-
-    cout << am.size() << endl;
+    cout << data_.size() << endl;
 }
 
-void DataLoader::parse_gps_gt(string fn){
-    ifstream gps_in(fn);
-    assert(gps_in.is_open());
+void DataLoader::parse_gps(string fn) {
 
-    string temp;
-    getline(gps_in, temp);
+    ifstream gpu_in(fn);
+    assert(gpu_in.is_open());
 
-    while (getline(gps_in, temp)) {
-        size_t ts;
-        Vector3d gt_vec, gps_vec;
-        std::tie(ts, gt_vec, gps_vec) = parse_gps_gt_line(temp);
+    string line;
+    getline(gpu_in, line);
 
-        //gt.insert(std::make_pair(ts, gt_vec));
-        //gps.insert(std::make_pair(ts, gps_vec));
+    Timestamp prev_ti;
+    Vector3d prev_gps;
+
+    while (getline(gpu_in, line)) {
+        unsigned long long ts;
+        double lo, la, a;
+        string str_spec {"%llu, %*u, %lf, %lf, %lf, %*s"};
+        
+        sscanf(line.c_str(), str_spec.c_str(), &ts, &lo, &la, &a);
+
+        Timestamp ti {std::chrono::microseconds(ts)};
+        Vector3d gps {lo, la, a};
+       
+        if (prev_ti == ti) {
+            assert(gps == prev_gps);
+            data_.insert(make_pair(ti, Data{ti, DataType::gps, gps}));
+
+            prev_gps = gps;
+            prev_ti = ti;
+        }
     }
-
 }
 
-std::tuple<size_t, Vector3d, Vector3d> DataLoader::parse_gps_gt_line(string line) {
-    unsigned long long ts;
-    double gtx, gty, gtz, gpsx, gpsy, gpsz;
-
-    sscanf(line.c_str(), "%llu,%lf,%lf,%lf,%*f,%*f,%*f,%lf,%lf,%lf,%*s",
-        &ts, &gpsx, &gpsy, &gpsz, &gtx, &gty, &gtz);
-
-    Vector3d gt {gtx, gty, gtz};
-    Vector3d gps {gpsx, gpsy, gpsz};
-
-    return std::tie(ts, gt, gps);
-}
-
-void DataLoader::parse_raw(string fn,
-    std::map<Timestamp, Eigen::Vector3d> &map_data){
+void DataLoader::parse_raw(string fn) {
 
     ifstream imu_in(fn);
     assert(imu_in.is_open());
 
-    string temp;
-    getline(imu_in, temp);
+    string line;
+    getline(imu_in, line);
 
-    while (getline(imu_in, temp)) {
-        map_data.insert(parse_raw_line(temp));
+    while (getline(imu_in, line)) {
+        unsigned long long ts;
+        double ox, oy, oz, ax, ay, az, ax_b, ay_b, az_b;
+        string str_spec {"%llu, %lf, %lf, %lf, %lf, %lf, %lf, %*f, %*f, %*f, %*s"};
+        
+        sscanf(line.c_str(), str_spec.c_str(),
+            &ox, &oy, &oz, &ax, &ay, &az, &ax_b, &ay_b, &az_b);
+
+        Timestamp ti {std::chrono::microseconds(ts)};
+        Vector3d omega {ox, oy, oz};
+        Vector3d accel {ax, ay, az};
+        Vector3d acc_bias {ax_b, ay_b, az_b};
+
+        data_.insert(make_pair(ti, Data{ti, DataType::omega, omega}));
+        data_.insert(make_pair(ti, Data{ti, DataType::accel, accel}));
+        data_.insert(make_pair(ti, Data{ti, DataType::accel_bias, acc_bias}));
     }
-}
-
-std::pair<DataLoader::Timestamp, Eigen::Vector3d> DataLoader::parse_raw_line(string line){
-    unsigned long long ts;
-    double x, y, z;
-   
-    sscanf(line.c_str(), "%llu, %*u, %lf, %lf, %lf, %*s", &ts, &x, &y, &z);
-
-    Timestamp ti {std::chrono::microseconds(ts)};
-    Vector3d accel {x, y, z};
-
-    return std::make_pair(ti, accel);
 }

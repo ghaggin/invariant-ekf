@@ -11,10 +11,10 @@ public:
         std::chrono::duration<double>>;
 
     enum struct DataType {
-        imu,
-        gyro,
+        omega,
+        accel,
+        accel_bias,
         gps,
-        gt
     };
 
     struct Data {
@@ -30,18 +30,9 @@ public:
     DataLoader(std::string data_dir);
 
 private:
-    void parse_raw(std::string, std::map<Timestamp, Eigen::Vector3d> &);
-    std::pair<Timestamp, Eigen::Vector3d> parse_raw_line(std::string);
-
-    void parse_gps_gt(std::string);
-    std::tuple<size_t, Eigen::Vector3d, Eigen::Vector3d>
-        parse_gps_gt_line(std::string);
-
-    // -------------------------------------------------------------------------
+    void parse_raw(std::string);
+    void parse_gps(std::string);
 
 private:
-    std::map<Timestamp, Eigen::Vector3d> imu;
-    std::map<Timestamp, Eigen::Vector3d> gyro;
-    std::map<Timestamp, Eigen::Vector3d> gps;
-    //std::map<size_t, Eigen::Vector3d> gt;
+    std::multimap<Timestamp, Data> data_;
 };
