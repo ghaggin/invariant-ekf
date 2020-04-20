@@ -5,7 +5,7 @@ clear; close all; format compact;
 % lower resolution with noise free data
 % should cause the prediction to improve.
 time.tmin = 0;
-time.tmax = 1;
+time.tmax = 2;
 time.dt = 1e-3;
 %--------------------------------------------------------------
 
@@ -76,8 +76,13 @@ for i = 1:N-1
     a = [accel.x(i); accel.y(i); accel.z(i)];
     w = [omega.x(i); omega.y(i); omega.z(i)];
 
+    
     % Run the ekf prediction step
     ekf.prediction(w, a, dt);
+    
+    % Run the ekf correction step
+    gps = [gt.x(i); gt.y(i); gt.z(i)];
+    ekf.correction(gps)
 
     % Extract the state from the filter
     [R, p, v] = ekf.getState(); 

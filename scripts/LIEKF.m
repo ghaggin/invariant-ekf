@@ -133,7 +133,7 @@ classdef LIEKF < handle
             xi = obj.makeTwist(delta_X);     % basically the obj.wedge operator for our 9-dimensional state space
             
             obj.mu = obj.mu * expm(xi);
-            obj.bias = obj.bias_pred + delta_B;
+            obj.bias = obj.bias + delta_B;
             obj.Sigma = (eye(15)- K * H) * obj.Sigma * (eye(15)- K * H)' + K * N * K';
         end
         
