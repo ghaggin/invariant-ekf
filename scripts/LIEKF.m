@@ -113,7 +113,7 @@ classdef LIEKF < handle
             obj.Sigma = phi*obj.Sigma*(phi') + phi*obj.Q*(phi')*dt;
         end
                 
-        %GPS 3x1
+        %GPS 3x1 is this in R^3 ECEF/NED/ENU??
         function correction(obj,GPS)    
             Y = [GPS;0;1];
             H = [zeros(3),zeros(3), eye(3), zeros(3), zeros(3)];

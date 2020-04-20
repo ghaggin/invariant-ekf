@@ -1,43 +1,103 @@
 clear; close all; format compact;
 
-tmin = 0;
-tmax = 1;
-dt = 1e-3;
+%--------------------------------------------------------------
+% Fake data time limits and resolution
+% lower resolution with noise free data
+% should cause the prediction to improve.
+time.tmin = 0;
+time.tmax = 1;
+time.dt = 1e-3;
+%--------------------------------------------------------------
 
-[omega, accel, ~, ~, gt, init, wf_data] = gen_fake_data(tmin, tmax, dt);
+%--------------------------------------------------------------
+% Covariance for sensor noise
+% set 
+%
+%   noise.add_noise = false
+% 
+% to have perfect noise free data.
+% If add_noise if false, accel_noise and 
+% gyro_noise can be anything.
+%
+% Q1 and Q2 are two random matrices
+% to try to create really bad noise
+% with a ton of cross corelation between
+% states
+noise.add_noise = true;
+m = 100;
+Q1 = randn(3,3);
+Q2 = randn(3,3);
+noise.accel_noise = m*Q1*Q1';
+noise.gyro_noise = m*Q2*Q2';
+%--------------------------------------------------------------
 
+%--------------------------------------------------------------
+% Generate the fake data
+% see function definition
+% for input and output variable
+% definitions.
+[omega, accel, ~, ~, gt, init, wf_data] = gen_fake_data(time, noise);
+%--------------------------------------------------------------
+
+%--------------------------------------------------------------
+% Initialize the filter (with initial condition)
+% Note: the polynomial function created by 
+% gen_fake_data almost definitely wont be zero
+% at t = 0
 ekf = LIEKF(init.R0, init.p0, init.v0)
+%--------------------------------------------------------------
+
+%--------------------------------------------------------------
+% Book Keeping
+
+% Set the time data from the accelerometer
 t = accel.t;
 N = length(t);
 
+% Initialize the position solution
+p_sol = zeros(3,N);
 p_sol(:,1) = init.p0;
 pos = [gt.x;gt.y;gt.z];
 
+% Initialize the theta solution to 
+% visualize the rotation matrix
+theta = zeros(3, N);
 theta(:,1) = Log(ekf.mu(1:3,1:3));
 theta_sol(:,1) = Log(gt.R{1});
+%--------------------------------------------------------------
 
-
+%--------------------------------------------------------------
+% Run the simulation on the data
 for i = 1:N-1
+    % Set dt off time data
     dt = t(i+1) - t(i);
 
+    % Set the acceleration from the fake data
     a = [accel.x(i); accel.y(i); accel.z(i)];
     w = [omega.x(i); omega.y(i); omega.z(i)];
 
+    % Run the ekf prediction step
     ekf.prediction(w, a, dt);
 
-    [R, p, v] = ekf.getState();
+    % Extract the state from the filter
+    [R, p, v] = ekf.getState(); 
 
+    % Save the outputs (for plotting)
     p_sol(:,i+1) = p;
-
     theta_sol(:,i+1) = Log(R);
     theta(:,i+1) = Log(gt.R{i});
 end
+%--------------------------------------------------------------
 
+%--------------------------------------------------------------
+% Plot position and theta data to visualize
+% the operation of the filter
 figure;
 subplot(311)
 hold('on')
 plot(t, p_sol(1,:), 'r')
 plot(t, pos(1,:), 'k--')
+title("Position")
 subplot(312)
 hold('on')
 plot(t, p_sol(2,:), 'r')
@@ -52,6 +112,7 @@ subplot(311)
 hold('on')
 plot(t, theta_sol(1,:), 'r')
 plot(t, theta(1,:), 'k--')
+title("Theta")
 subplot(312)
 hold('on')
 plot(t, theta_sol(2,:), 'r')
@@ -60,7 +121,11 @@ subplot(313)
 hold('on')
 plot(t, theta_sol(3,:), 'r')
 plot(t, theta(3,:), 'k--')
+%--------------------------------------------------------------
 
+
+%-------------------------------------------------------------
+% Helper functions, mostly for SO3 stuff
 function ux  = skew(u)
     ux = [
         0 -u(3) u(2)
@@ -85,3 +150,4 @@ function J = J_l(theta)
 
     J = eye(3) + (1 - cos(t))/t^2 * t_x + (t - sin(t))/t^3*(t_x)^2;
 end
+%-------------------------------------------------------------

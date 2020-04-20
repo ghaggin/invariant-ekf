@@ -7,9 +7,12 @@
 %   - Noise
 %   - Biases
 %   - Assynchronous measurements
-function [omega, accel, gps, sig, gt, init, wf_data] = gen_fake_data(tmin, tmax, dt)
+function [omega, accel, gps, sig, gt, init, wf_data] = gen_fake_data(time, noise)
     %----------------------------------------------
     % Set time data
+    tmin = time.tmin;
+    tmax = time.tmax;
+    dt = time.dt;
     t = tmin:dt:tmax;
     %----------------------------------------------
 
@@ -32,19 +35,31 @@ function [omega, accel, gps, sig, gt, init, wf_data] = gen_fake_data(tmin, tmax,
     % can't tell the difference between experiencing
     % an upward acceleration vs. a gravitational field
     % pulling it down (picture a mass suspended by springs)
-    ag = [0;0;9.81];
+    g = [0;0;-9.81];
 
     % Acceleration as measured by the accelerometer is
     % the world frame acceleration plus gravity accel
     % rotated into the body frame by R
+    %
+    % Noise is then added to this "true" body frame accel
     accel = zeros(3, size(wf_data.acc, 2));
     for i = 1:size(accel, 2)
-        accel(:,i) = wf_data.R{i}' * (wf_data.acc(:,i) + ag);
+        accel(:,i) = wf_data.R{i}' * (wf_data.acc(:,i) - g);
+        if noise.add_noise
+            Q_a = noise.accel_noise;
+            L_a = chol(Q_a, 'lower');
+            accel(:,i) = accel(:,i) + L_a*randn(3,1);
+        end
     end
 
     % Set the measured rates to the generated 
     % angular rates
     omega = wf_data.omega;
+    if noise.add_noise
+        Q_w = noise.gyro_noise;
+        L_w = chol(Q_w, 'lower');
+        omega = omega + L_w*randn(3,size(omega, 2));
+    end
 
     % Set the ground truth as the generated position
     gt.pos = wf_data.pos;
