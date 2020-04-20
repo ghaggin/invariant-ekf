@@ -7,12 +7,16 @@
 %   - Noise
 %   - Biases
 %   - Assynchronous measurements
-function [omega, accel, gps, sig, gt] = gen_fake_data()
+function [omega, accel, gps, sig, gt, init, wf_data] = gen_fake_data(tmin, tmax, dt)
+    %----------------------------------------------
+    % Set time data
+    t = tmin:dt:tmax;
+    %----------------------------------------------
 
     %----------------------------------------------
     % Get the world frame data, see 
     % comment above function for details
-    wf_data = generate_world_frame();
+    wf_data = generate_world_frame(t);
     %----------------------------------------------
 
     %----------------------------------------------
@@ -33,9 +37,9 @@ function [omega, accel, gps, sig, gt] = gen_fake_data()
     % Acceleration as measured by the accelerometer is
     % the world frame acceleration plus gravity accel
     % rotated into the body frame by R
-    acc = zeros(3, size(wf_data.acc, 2));
-    for i = 1:size(acc, 2)
-        acc(:,i) = wf_data.R{i} * (wf_data.acc(:,i) + ag);
+    accel = zeros(3, size(wf_data.acc, 2));
+    for i = 1:size(accel, 2)
+        accel(:,i) = wf_data.R{i}' * (wf_data.acc(:,i) + ag);
     end
 
     % Set the measured rates to the generated 
@@ -43,22 +47,53 @@ function [omega, accel, gps, sig, gt] = gen_fake_data()
     omega = wf_data.omega;
 
     % Set the ground truth as the generated position
-    gt = wf_data.pos;
+    gt.pos = wf_data.pos;
+    gt.R = wf_data.R;
 
     % Convert ENU coordinates to GPS coordinates
     E = wgs84Ellipsoid();
     gps = zeros(3, size(wf_data.acc, 2));
     for i = 1:size(gps, 2)
-        [lat, long, alt] = enu2geodetic(gt(1,i), gt(2,i), gt(3,i), origin(1), origin(2), origin(3), E);
+        [lat, long, alt] = enu2geodetic(gt.pos(1,i), gt.pos(2,i), gt.pos(3,i), origin(1), origin(2), origin(3), E);
         gps(:,i) = [lat;long;alt];
     end
-    %----------------------------------------------
 
-    %----------------------------------------------
-    %TODO: convert body frame data into same form as
-    %      zurich data
-    %----------------------------------------------
+    sig =[ 
+        4.6778    1.9437    0.0858
+        1.9437   11.5621    5.8445
+        0.0858    5.8445   22.4051
+    ];
+    [omega, accel, gps, sig, gt] = convertToZurich(t, omega, accel, gps, sig, gt);
 
+    init.R0 = wf_data.R{1};
+    init.p0 = wf_data.pos(:,1);
+    init.v0 = wf_data.vel(:,1);
+end
+
+% Convert my form to the zurich form
+function [omega_r, accel_r, gps_r, sig_r, gt_r] = convertToZurich(t, omega, accel, gps, sig, gt)
+    omega_r.x = omega(1,:);
+    omega_r.y = omega(2,:);
+    omega_r.z = omega(3,:);
+    omega_r.t = t ;
+
+    accel_r.x = accel(1,:);
+    accel_r.y = accel(2,:);
+    accel_r.z = accel(3,:);
+    accel_r.t = t;
+
+    gps_r.lat = gps(1,:);
+    gps_r.long = gps(2,:);
+    gps_r.alt = gps(3,:);
+    gps_r.t = t;
+
+    sig_r = sig;
+
+    gt_r.x = gt.pos(1,:);
+    gt_r.y = gt.pos(2,:);
+    gt_r.z = gt.pos(3,:);
+    gt_r.R = gt.R;
+    gt_r.t = t;
 end
 
 
@@ -72,17 +107,12 @@ end
 %
 % Returns:
 %   wf_data = {t, pos, vel, acc, R, omega}
-function wf_data = generate_world_frame()
-    tmin = 0;
-    tmax = 10;
-    dt = 0.01;
+function wf_data = generate_world_frame(t)
 
     % polynomial parameters
     ord = 5;
     max_val = 20;
 
-    % Generate time data
-    t = tmin:dt:tmax;
 
     [pos.x, vel.x, acc.x] = gen_pva(ord, max_val, t);
     [pos.y, vel.y, acc.y] = gen_pva(ord, max_val, t);

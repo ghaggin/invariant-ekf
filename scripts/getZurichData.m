@@ -3,7 +3,7 @@ function [omega, accel, gps, sig, gt] = getZurichData()
 
     % general comments, this data set has some issues with units.
     % Their ground truth
-    data_root = '/media/chengjia/h2/data/zurich/AGZ_subset';
+    data_root = 'AGZ_subset';
     GPSfile =  fullfile(data_root, 'Log Files/OnboardGPS.csv');
     IMUfile = fullfile(data_root, 'Log Files/RawAccel.csv');
     Gyrofile = fullfile(data_root, 'Log Files/RawGyro.csv');
