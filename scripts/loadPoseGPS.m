@@ -74,7 +74,14 @@ LLA_GPS_LA = dataArray_GPS(:,4);
 LLA_GPS_A = dataArray_GPS(:,5);
 
 XYZ_GPS = lla2ecef([LLA_GPS_LO{:}, LLA_GPS_LA{:}, LLA_GPS_A{:}]);
-
+XYZ_GPS = XYZ_GPS - XYZ_GPS(1,:);
+GPS_unique = zeros(length(XYZ_GPS),1);
+GPS_unique(1) = 1;
+for i = 2:length(XYZ_GPS)
+    GPS_unique(i) = XYZ_GPS(i,1) ~= XYZ_GPS(i-1,1);
+end
+XYZ_GPS = XYZ_GPS(logical(GPS_unique),:);
+T_GPS = T_GPS(logical(GPS_unique));
 %% Clear temporary variables
 clearvars filename delimiter startRow formatSpec fileID dataArray ans...
     omega_x omega_y omega_z accel_x accel_y accel_z acc_b_x acc_b_y acc_b_z...
