@@ -21,11 +21,10 @@ classdef LIEKF < handle
                 R0 = eye(3);
                 p0 = zeros(3,1);
                 v0 = zeros(3,1);
-            else
-                obj.mu = blkdiag(R0, eye(2));
-                obj.mu(1:3,4) = v0;
-                obj.mu(1:3,5) = p0;
             end
+            obj.mu = blkdiag(R0, eye(2));
+            obj.mu(1:3,4) = v0;
+            obj.mu(1:3,5) = p0;
 
             obj.Sigma = eye(15); %TBT
             obj.bias = zeros(6,1);
@@ -40,8 +39,7 @@ classdef LIEKF < handle
                 zeros(3),obj.cov_a,zeros(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),eye(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),zeros(3),obj.cov_gb,zeros(3),;
-                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab
-            ]);
+                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab]);
             obj.A = @(wt,at) [
                 -obj.skew(wt), zeros(3),  zeros(3), -eye(3), zeros(3); 
                 -obj.skew(at), -obj.skew(wt), zeros(3), zeros(3), -eye(3);
@@ -109,7 +107,7 @@ classdef LIEKF < handle
                 Rk, vk, pk; 
                 zeros(2,3), eye(2)
             ];
-            obj.bias = zeros(6,1);
+%             obj.bias = zeros(6,1);
             obj.Sigma = phi*obj.Sigma*(phi') + phi*obj.Q*(phi')*dt;
         end
                 
