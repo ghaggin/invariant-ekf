@@ -4,9 +4,8 @@
 %
 % TODO:
 %   - Return data form (same as zurich?)
-%   - Noise
 %   - Biases
-%   - Assynchronous measurements
+%   - Assynchronous measurements (not if needed?)
 function [omega, accel, gps, sig, gt, init, wf_data] = gen_fake_data(time, noise)
     %----------------------------------------------
     % Set time data

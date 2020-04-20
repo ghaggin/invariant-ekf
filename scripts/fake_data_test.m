@@ -11,10 +11,7 @@ time.dt = 1e-3;
 
 %--------------------------------------------------------------
 % Covariance for sensor noise
-% set 
-%
-%   noise.add_noise = false
-% 
+% set noise.add_noise = false 
 % to have perfect noise free data.
 % If add_noise if false, accel_noise and 
 % gyro_noise can be anything.
@@ -29,6 +26,14 @@ Q1 = randn(3,3);
 Q2 = randn(3,3);
 noise.accel_noise = m*Q1*Q1';
 noise.gyro_noise = m*Q2*Q2';
+%--------------------------------------------------------------
+
+%--------------------------------------------------------------
+% Set the frequency of the correction step (Hz)
+%  - Increase the frequency to test robustness of filter
+%    to slow updates
+f_cor = 1;
+dt_cor = 1/f_cor;
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
@@ -68,6 +73,7 @@ theta_sol(:,1) = Log(gt.R{1});
 
 %--------------------------------------------------------------
 % Run the simulation on the data
+t_cor = t(1);  %Time of first correction
 for i = 1:N-1
     % Set dt off time data
     dt = t(i+1) - t(i);
@@ -75,14 +81,18 @@ for i = 1:N-1
     % Set the acceleration from the fake data
     a = [accel.x(i); accel.y(i); accel.z(i)];
     w = [omega.x(i); omega.y(i); omega.z(i)];
-
     
     % Run the ekf prediction step
     ekf.prediction(w, a, dt);
     
     % Run the ekf correction step
-    gps = [gt.x(i); gt.y(i); gt.z(i)];
-    ekf.correction(gps)
+    if t(i) >= t_cor
+        gps = [gt.x(i); gt.y(i); gt.z(i)];
+        ekf.correction(gps)
+
+        % Next correct at t + dt_cor
+        t_cor = t(i) + dt_cor;
+    end
 
     % Extract the state from the filter
     [R, p, v] = ekf.getState(); 
