@@ -28,17 +28,18 @@ public:
     using OutDataType = std::pair<
         std::multimap<Timestamp, Data>::iterator,
         std::multimap<Timestamp, Data>::iterator>;
+
 public:
     DataLoader(std::string data_dir);
     OutDataType next();
     bool complete();
     Timestamp first_ts();
 
-public:
+private:
     void parse_raw(std::string);
     void parse_gps(std::string);
 
-public:
+private:
     std::multimap<Timestamp, Data> data_;
     bool done_;
     Timestamp first_ts_;

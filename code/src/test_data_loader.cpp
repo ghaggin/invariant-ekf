@@ -11,7 +11,7 @@ size_t count (DataLoader::OutDataType in){
 
 int main() {
     DataLoader dl("/media/chengjia/h2/data/zurich/AGZ_subset");
-    std::cout << dl.data_.size() << std::endl;
+    
     while (! dl.complete()){
         auto next_data = dl.next();
 
