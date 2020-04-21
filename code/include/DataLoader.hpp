@@ -9,7 +9,6 @@ class DataLoader {
 public:
     using Timestamp = std::chrono::time_point<std::chrono::system_clock,
         std::chrono::duration<double>>;
-
     enum struct DataType {
         omega,
         accel,
@@ -26,13 +25,30 @@ public:
             ts(ts_), dt(dt_), datum(datum_) {}
     };
 
+    using OutDataType = std::pair<
+        std::multimap<Timestamp, Data>::iterator,
+        std::multimap<Timestamp, Data>::iterator>;
 public:
     DataLoader(std::string data_dir);
+    OutDataType next();
+    bool complete();
+    Timestamp first_ts();
 
-private:
+public:
     void parse_raw(std::string);
     void parse_gps(std::string);
 
-private:
+public:
     std::multimap<Timestamp, Data> data_;
+    bool done_;
+    Timestamp first_ts_;
+    Timestamp next_ts_;
 };
+
+inline bool DataLoader::complete() {
+    return done_;
+}
+
+inline DataLoader::Timestamp DataLoader::first_ts() {
+    return first_ts_;
+}
