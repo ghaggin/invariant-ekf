@@ -74,12 +74,34 @@ LLA_GPS_LA = dataArray_GPS(:,4);
 LLA_GPS_A = dataArray_GPS(:,5);
 
 XYZ_GPS = lla2ecef([LLA_GPS_LO{:}, LLA_GPS_LA{:}, LLA_GPS_A{:}]);
-XYZ_GPS = XYZ_GPS - XYZ_GPS(1,:);
+rz = rotz(-LLA_GPS_LA{1}(1)-90);
+ry = roty(-LLA_GPS_LO{1}(1));
+XYZ_GPS = (rz*ry*(XYZ_GPS - XYZ_GPS(1,:))')';
+% XYZ_GPS = XYZ_GPS - XYZ_GPS(1,:);
 GPS_unique = zeros(length(XYZ_GPS),1);
 GPS_unique(1) = 1;
 for i = 2:length(XYZ_GPS)
     GPS_unique(i) = XYZ_GPS(i,1) ~= XYZ_GPS(i-1,1);
 end
+
+
+% load the data into matlab 
+loadGroundTruthAGL
+
+% plot ground truth positions
+x_gt = x_gt - x_gt(1); y_gt = y_gt - y_gt(1); z_gt = z_gt - z_gt(1);
+x_gps = x_gps - x_gps(1); y_gps = y_gps - y_gps(1); z_gps = z_gps - z_gps(1);
+
+[TR, TT] = icp([x_gps,y_gps,z_gps]', XYZ_GPS');
+XYZ_GPS = (TR * XYZ_GPS' + TT)';
+
+% plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3), '*k'); hold on;
+% plot3(x_gt, y_gt, z_gt, '.')
+% plot3(x_gps, y_gps, z_gps, 'or');
+% plot gps positions
+
+
+%%
 XYZ_GPS = XYZ_GPS(logical(GPS_unique),:);
 T_GPS = T_GPS(logical(GPS_unique));
 %% Clear temporary variables
