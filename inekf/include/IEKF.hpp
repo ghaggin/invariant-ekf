@@ -35,8 +35,8 @@ public:
     void resetFilter(const Timestamp& time);
 
     // Add an IMU measurement to the filter
-    void addImu(const Timestamp& timestamp, const Eigen::Vector3f& acc,
-        const Eigen::Vector3f& gyro);
+    void addImu(const Timestamp& timestamp, const Eigen::Vector3d& acc,
+        const Eigen::Vector3d& gyro);
 
     // Add a gps measurement
     void addGps(const Timestamp& timestamp, const Eigen::Vector3d& gps);
@@ -45,36 +45,36 @@ public:
     std::tuple<Matrix5d&, Matrix9d&, Timestamp&> getState();
 
     // Return rotatino matrix R
-    inline Matrix3d R() const
+    Matrix3d R() const
     {
         return mu_.block(0, 0, 3, 3);
     }
 
     // Return position vector p
-    inline Vector3d p() const
+    Vector3d p() const
     {
         return mu_.block(0, 4, 3, 1);
     }
 
     // Return velocity vector v
-    inline Vector3d v() const
+    Vector3d v() const
     {
         return mu_.block(0, 3, 3, 1);
     }
 
-    inline const Matrix5d& mu() const
+    const Matrix5d& mu() const
     {
         return mu_;
     }
 
-    inline double g() const
+    double g() const
     {
         return g_;
     }
 
 private:
     // Perform the prediction step of the filter
-    void prediction(const Eigen::Vector3f& acc, const Eigen::Vector3f& gyro,
+    void prediction(const Eigen::Vector3d& acc, const Eigen::Vector3d& gyro,
         std::chrono::duration<double> dt);
 
     // Perform the correction step of the filter

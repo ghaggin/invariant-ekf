@@ -91,11 +91,11 @@ BOOST_AUTO_TEST_CASE(interfaces)
 BOOST_AUTO_TEST_CASE(prediction_zero_meas)
 {
     // Default construct with mu = Id
-    IEKF iekf;
+    IEKF iekf{};
 
-    auto acc = Vector3f::Zero();
-    auto gyro = Vector3f::Zero();
-    auto time = system_clock::now();
+    auto acc = Vector3d::Zero();
+    auto gyro = Vector3d::Zero();
+    Timestamp time{Seconds{0}};
 
     // Add imu measurement
     iekf.addImu(time, acc, gyro);
@@ -104,6 +104,27 @@ BOOST_AUTO_TEST_CASE(prediction_zero_meas)
 
     auto a = max_diff(mu, Id5);
     BOOST_CHECK_CLOSE(a, 0, tol);
+}
+
+BOOST_AUTO_TEST_CASE(prediction_const_gyro)
+{
+    // Default construct with mu = Id
+    IEKF iekf;
+
+    auto g = iekf.g();
+
+    auto acc = (Vector3d() << 0.0, 0.0, g).finished();
+    auto gyro = (Vector3d() << 2 * M_PI, 0, 0).finished();
+
+    Timestamp time{Seconds{1}};
+
+    iekf.addImu(time, acc, gyro);
+
+    auto R = iekf.R();
+    auto R_sol = Id3;
+
+    auto a = max_diff(R, R_sol);
+    BOOST_CHECK(a < 1e-8);
 }
 
 BOOST_AUTO_TEST_CASE(prediction_const_acc)
@@ -115,8 +136,8 @@ BOOST_AUTO_TEST_CASE(prediction_const_acc)
 
     // Measure 1 m/s^2 accel in body frame x
     // keep body frame aligned with world frame, look for accel in x
-    auto acc = (Vector3f() << 1.0, 0.0, g).finished();
-    auto gyro = Vector3f::Zero();
+    auto acc = (Vector3d() << 1.0, 0.0, g).finished();
+    auto gyro = Vector3d::Zero();
 
     // Default constructor sets time to zero
     // Set first imu measurement at 1 seconds
@@ -135,11 +156,12 @@ BOOST_AUTO_TEST_CASE(prediction_const_acc)
     auto v_sol = (Vector3d() << 1., 0, 0).finished();
 
     auto a = max_diff(R, R_sol);
-    BOOST_CHECK_CLOSE(a, 0, tol);
+    BOOST_CHECK(a < 1e-8);
 
     a = max_diff(p, p_sol);
-    BOOST_CHECK_CLOSE(a, 0, tol);
+    BOOST_CHECK(a < 1e-8);
+    std::cout << p << std::endl;
 
     a = max_diff(v, v_sol);
-    BOOST_CHECK_CLOSE(a, 0, tol);
+    BOOST_CHECK(a < 1e-8);
 }
