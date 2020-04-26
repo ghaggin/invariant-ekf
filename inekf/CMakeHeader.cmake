@@ -1,6 +1,7 @@
 # Build options and variables
 option(BUILD_TESTS "Build the unit test modules" ON)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-g3 -Wall -Wconversion -Wextra -pedantic")
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra --pedantic")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
