@@ -49,6 +49,7 @@ classdef EKF < handle
             
             %Propoagate mean through non-linear dynamics
             obj.mu = obj.eval_mu(obj.mu, w, a, dt);
+            obj.mu(7:9) = wrapToPi(obj.mu(7:9)); % so sad
         end
         
         %------------------------------------------------------------------
