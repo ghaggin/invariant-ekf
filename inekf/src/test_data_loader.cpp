@@ -10,7 +10,7 @@ size_t count (DataLoader::OutDataType in){
 
 
 int main() {
-    DataLoader dl("/media/chengjia/h2/data/zurich/AGZ_subset");
+    DataLoader dl("/media/chengjia/h2/data/zurich/AGZ");
     
     while (! dl.complete()){
         auto next_data = dl.next();
