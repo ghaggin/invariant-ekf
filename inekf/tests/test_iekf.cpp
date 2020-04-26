@@ -160,8 +160,31 @@ BOOST_AUTO_TEST_CASE(prediction_const_acc)
 
     a = max_diff(p, p_sol);
     BOOST_CHECK(a < 1e-8);
-    std::cout << p << std::endl;
 
     a = max_diff(v, v_sol);
     BOOST_CHECK(a < 1e-8);
+
+    acc = (Vector3d() << 0, 1, g).finished();
+    time = Timestamp{Seconds{2}};
+    iekf.addImu(time, acc, gyro);
+    R = iekf.R();
+    p = iekf.p();
+    v = iekf.v();
+    p_sol = (Vector3d() << 1.5, 0.5, 0).finished();
+    v_sol = (Vector3d() << 1., 1., 0).finished();
+    BOOST_CHECK(max_diff(R, R_sol) < 1e-8);
+    BOOST_CHECK(max_diff(p, p_sol) < 1e-8);
+    BOOST_CHECK(max_diff(v, v_sol) < 1e-8);
+
+    acc = (Vector3d() << 0, 0, g + 1).finished();
+    time = Timestamp{Seconds{3}};
+    iekf.addImu(time, acc, gyro);
+    R = iekf.R();
+    p = iekf.p();
+    v = iekf.v();
+    p_sol = (Vector3d() << 2.5, 1.5, 0.5).finished();
+    v_sol = (Vector3d() << 1., 1., 1.).finished();
+    BOOST_CHECK(max_diff(R, R_sol) < 1e-8);
+    BOOST_CHECK(max_diff(p, p_sol) < 1e-8);
+    BOOST_CHECK(max_diff(v, v_sol) < 1e-8);
 }
