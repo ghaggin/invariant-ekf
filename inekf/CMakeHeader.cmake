@@ -2,7 +2,7 @@
 option(BUILD_TESTS "Build the unit test modules" ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS ON)
-set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra --pedantic")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra --pedantic")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
 set(CMAKE_BUILD_TYPE Debug)
