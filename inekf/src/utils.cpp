@@ -2,6 +2,9 @@
 
 using namespace Eigen;
 
+using Matrix5d = Matrix<double, 5, 5>;
+using Vector9d = Matrix<double, 9, 1>;
+
 /*****************************************************************************/
 // clang-format off
 Matrix3d skew(const Vector3d& u) {
@@ -51,4 +54,13 @@ Matrix3d gamma2(const Vector3d& phi)
                    (2 * pow(norm_phi, 4)) * skew(phi) * skew(phi);
     }
     return Matrix3d::Identity();
+}
+
+/*****************************************************************************/
+Matrix5d makeTwist(const Vector9d& u)
+{
+    Matrix5d twist = Matrix5d::Zero();
+    twist.block<3, 3>(0, 0) = skew(u.block<3, 1>(0, 0));
+    twist.block<3, 1>(0, 3) = u.block<3, 1>(3, 0);
+    twist.block<3, 1>(0, 4) = u.block<3, 1>(6, 0);
 }

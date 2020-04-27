@@ -14,8 +14,12 @@ using namespace Eigen;
 using namespace iekf;
 
 using Matrix5d = IEKF::Matrix5d;
+using Matrix9d = Eigen::Matrix<double, 9, 9>;
 using Matrix15d = IEKF::Matrix15d;
 using Timestamp = IEKF::Timestamp;
+using Vector5d = Eigen::Matrix<double, 5, 1>;
+using Vector6d = Eigen::Matrix<double, 6, 1>;
+using Vector9d = Eigen::Matrix<double, 9, 1>;
 
 void IEKF::prediction(
     const Vector3d& acc, const Vector3d& gyro, duration<double> dt_dur)
@@ -59,6 +63,37 @@ void IEKF::prediction(
 
 void IEKF::correction(const Vector3d& gps)
 {
+    Vector5d Y;
+    Y.block<3, 1>(0, 0) = gps;
+    Y(4) = 1;
+
+    Matrix<double, 3, 15> H;
+    H.block<3, 3>(0, 6) = Matrix3d::Identity();
+    Matrix3d Rk = R();
+
+    Matrix3d V = Matrix3d::Identity();
+    Matrix3d N = Rk.transpose() * V * Rk;
+
+    Matrix3d S = H * Sigma_ * H.transpose() + N;
+    Matrix<double, 15, 3> K = Sigma_ * H.transpose() * S.inverse();
+    Matrix<double, 9, 3> K_X = K.block<9, 3>(0, 0);
+    Matrix<double, 6, 3> K_B = K.block<6, 3>(9, 0);
+
+    Matrix<double, 3, 5> PI;
+    PI.block<3, 3>(0, 0) = Matrix3d::Identity();
+    PI.block<3, 2>(3, 0) = Matrix<double, 3, 2>::Zero();
+
+    Vector5d nu = mu_.inverse() * Y;
+    Vector9d delta_X = K_X * PI * nu;
+    Vector6d delta_B = K_B * PI * nu;
+
+    Matrix5d xi = makeTwist(delta_X);
+
+    mu_ = mu_ * xi.exp();
+    bias_ = bias_ + delta_B;
+    Sigma_ = (Matrix15d::Identity() - K * H) * Sigma_ *
+                 (Matrix15d::Identity() - K * H).transpose() +
+             K * N * K.transpose();
 }
 
 void IEKF::addImu(

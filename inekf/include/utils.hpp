@@ -28,3 +28,5 @@ Eigen::Matrix3d skew(const Eigen::Vector3d& u);
 Eigen::Matrix3d gamma0(const Eigen::Vector3d& phi);
 Eigen::Matrix3d gamma1(const Eigen::Vector3d& phi);
 Eigen::Matrix3d gamma2(const Eigen::Vector3d& phi);
+
+Eigen::Matrix<double, 5, 5> makeTwist(const Eigen::Matrix<double, 9, 1>& u);

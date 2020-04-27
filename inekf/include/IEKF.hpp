@@ -10,7 +10,8 @@ class IEKF
 {
 public:
     using Matrix5d = Eigen::Matrix<double, 5, 5>;
-    // using Matrix15d = Eigen::Matrix<double, 9, 9>;
+    using Matrix6d = Eigen::Matrix<double, 6, 6>;
+    using Vector6d = Eigen::Matrix<double, 6, 1>;
     using Matrix15d = Eigen::Matrix<double, 15, 15>;
     using Matrix3d = Eigen::Matrix<double, 3, 3>;
     using Vector3d = Eigen::Matrix<double, 3, 1>;
@@ -19,17 +20,28 @@ public:
     using Seconds = std::chrono::duration<double, std::ratio<1, 1>>;
 
 public:
-    IEKF() : mu_(Matrix5d::Identity()), Sigma_(Matrix15d::Identity())
+    IEKF()
+        : mu_(Matrix5d::Identity()),
+          Sigma_(Matrix15d::Identity()),
+          bias_(Vector6d::Zero())
     {
     }
 
     IEKF(const Matrix5d& mu, const Matrix15d& Sigma)
-        : mu_(mu), Sigma_(Sigma), time_(Seconds(0)), time_last_predict_(time_)
+        : mu_(mu),
+          Sigma_(Sigma),
+          time_(Seconds(0)),
+          time_last_predict_(time_),
+          bias_(Vector6d::Zero())
     {
     }
 
     IEKF(const Matrix5d& mu, const Matrix15d& Sigma, const Timestamp& time)
-        : mu_(mu), Sigma_(Sigma), time_(time), time_last_predict_(time_)
+        : mu_(mu),
+          Sigma_(Sigma),
+          time_(time),
+          time_last_predict_(time_),
+          bias_(Vector6d::Zero())
     {
     }
 
@@ -87,6 +99,7 @@ private:
     Matrix15d Sigma_;
     Timestamp time_;
     Timestamp time_last_predict_;
+    Vector6d bias_;
 
     const double g_ = 9.81;
 };
