@@ -63,4 +63,5 @@ Matrix5d makeTwist(const Vector9d& u)
     twist.block<3, 3>(0, 0) = skew(u.block<3, 1>(0, 0));
     twist.block<3, 1>(0, 3) = u.block<3, 1>(3, 0);
     twist.block<3, 1>(0, 4) = u.block<3, 1>(6, 0);
+    return twist;
 }
