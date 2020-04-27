@@ -15,7 +15,7 @@ using namespace iekf;
 using namespace std::chrono;
 
 using Matrix5d = IEKF::Matrix5d;
-using Matrix9d = IEKF::Matrix9d;
+using Matrix15d = IEKF::Matrix15d;
 using Timestamp = IEKF::Timestamp;
 using Seconds = IEKF::Seconds;
 
@@ -29,46 +29,46 @@ static double max_diff(const EigenMatd& m1, const EigenMatd& m2)
 
 const Matrix3d Id3 = Matrix3d::Identity();
 const Matrix5d Id5 = Matrix5d::Identity();
-const Matrix9d Id9 = Matrix9d::Identity();
+const Matrix15d Id15 = Matrix15d::Identity();
 
 BOOST_AUTO_TEST_CASE(default_constructor)
 {
     IEKF iekf;
     Matrix5d mu;
-    Matrix9d Sigma;
+    Matrix15d Sigma;
     Timestamp time;
     std::tie(mu, Sigma, time) = iekf.getState();
 
     auto a = (mu - Matrix5d::Identity()).cwiseAbs().maxCoeff();
     BOOST_CHECK_CLOSE(a, 0, tol);
 
-    a = (Sigma - Matrix9d::Identity()).cwiseAbs().maxCoeff();
+    a = (Sigma - Matrix15d::Identity()).cwiseAbs().maxCoeff();
     BOOST_CHECK_CLOSE(a, 0, tol);
 }
 
 BOOST_AUTO_TEST_CASE(constructor)
 {
     auto mu_in = arange_square<double, 5>();
-    auto Sigma_in = arange_square<double, 9>();
+    auto Sigma_in = arange_square<double, 15>();
 
     IEKF iekf(mu_in, Sigma_in);
 
     Matrix5d mu_out;
-    Matrix9d Sigma_out;
+    Matrix15d Sigma_out;
     Timestamp time_out;
     std::tie(mu_out, Sigma_out, time_out) = iekf.getState();
 
     auto a = (mu_out - arange_square<double, 5>()).cwiseAbs().maxCoeff();
     BOOST_CHECK_CLOSE(a, 0, tol);
 
-    a = (Sigma_out - arange_square<double, 9>()).cwiseAbs().maxCoeff();
+    a = (Sigma_out - arange_square<double, 15>()).cwiseAbs().maxCoeff();
     BOOST_CHECK_CLOSE(a, 0, tol);
 }
 
 BOOST_AUTO_TEST_CASE(interfaces)
 {
     auto mu = arange_square<double, 5>();
-    auto Sigma = Matrix9d::Identity();
+    auto Sigma = Matrix15d::Identity();
     IEKF iekf(mu, Sigma);
     auto R = iekf.R();
     auto p = iekf.p();

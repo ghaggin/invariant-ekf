@@ -10,7 +10,8 @@ class IEKF
 {
 public:
     using Matrix5d = Eigen::Matrix<double, 5, 5>;
-    using Matrix9d = Eigen::Matrix<double, 9, 9>;
+    // using Matrix15d = Eigen::Matrix<double, 9, 9>;
+    using Matrix15d = Eigen::Matrix<double, 15, 15>;
     using Matrix3d = Eigen::Matrix<double, 3, 3>;
     using Vector3d = Eigen::Matrix<double, 3, 1>;
     using Timestamp = std::chrono::time_point<std::chrono::system_clock,
@@ -18,16 +19,16 @@ public:
     using Seconds = std::chrono::duration<double, std::ratio<1, 1>>;
 
 public:
-    IEKF() : mu_(Matrix5d::Identity()), Sigma_(Matrix9d::Identity())
+    IEKF() : mu_(Matrix5d::Identity()), Sigma_(Matrix15d::Identity())
     {
     }
 
-    IEKF(const Matrix5d& mu, const Matrix9d& Sigma)
+    IEKF(const Matrix5d& mu, const Matrix15d& Sigma)
         : mu_(mu), Sigma_(Sigma), time_(Seconds(0)), time_last_predict_(time_)
     {
     }
 
-    IEKF(const Matrix5d& mu, const Matrix9d& Sigma, const Timestamp& time)
+    IEKF(const Matrix5d& mu, const Matrix15d& Sigma, const Timestamp& time)
         : mu_(mu), Sigma_(Sigma), time_(time), time_last_predict_(time_)
     {
     }
@@ -42,7 +43,7 @@ public:
     void addGps(const Timestamp& timestamp, const Eigen::Vector3d& gps);
 
     // Return the state and time stamp
-    std::tuple<Matrix5d&, Matrix9d&, Timestamp&> getState();
+    std::tuple<Matrix5d&, Matrix15d&, Timestamp&> getState();
 
     // Return rotatino matrix R
     Matrix3d R() const
@@ -83,7 +84,7 @@ private:
     // State mean and covaraiance variables
     // and timestamp
     Matrix5d mu_;
-    Matrix9d Sigma_;
+    Matrix15d Sigma_;
     Timestamp time_;
     Timestamp time_last_predict_;
 

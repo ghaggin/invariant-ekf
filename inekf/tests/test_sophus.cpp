@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+using namespace Eigen;
+
 BOOST_AUTO_TEST_CASE(test_exp_log)
 {
     // Create a vector in the tangent space
