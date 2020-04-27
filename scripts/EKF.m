@@ -24,7 +24,7 @@ classdef EKF < handle
             obj.mu = [p0; v0; theta0];
             obj.Sigma = eye(9);
             
-            [obj.Q_w_mat, obj.Q_a_mat, obj.V] = deal(eye(3) .* 0.01);
+            [obj.Q_w_mat, obj.Q_a_mat, obj.V] = deal(eye(3) .* 0.1);
             
             %{
             syms x [3, 1]
@@ -45,34 +45,35 @@ classdef EKF < handle
                 x1 + dt*(v3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - v2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + v1*cos(t2)*cos(t3));
                 x2 + dt*(v2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - v3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + v1*cos(t2)*sin(t3));
                 x3 + dt*(v3*cos(t1)*cos(t2) - v1*sin(t2) + v2*cos(t2)*sin(t1));
-                v1 + dt*(a3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - a2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + a1*cos(t2)*cos(t3));
-                v2 + dt*(a2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - a3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + a1*cos(t2)*sin(t3));
-                v3 - (981*dt)/100 + dt*(a3*cos(t1)*cos(t2) - a1*sin(t2) + a2*cos(t2)*sin(t1));
-                t1 + dt*w1;
-                t2 + dt*w2;
-                t3 + dt*w3];
+                v1 + dt*(a3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - a2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + a1*cos(t2)*cos(t3) - 9.81*sin(t2));
+                v2 + dt*(a2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - a3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + a1*cos(t2)*sin(t3) + 9.81*cos(t2)*sin(t1));
+                v3 + dt*(a3*cos(t1)*cos(t2) - a1*sin(t2) + a2*cos(t2)*sin(t1) + 9.81*cos(t2)*cos(t1));
+                t1 + dt*(w1 + w2*sin(t1)*tan(t2) + w3*cos(t1)*tan(t2));
+                t2 + dt*(w2*cos(t1) - w3*sin(t1));
+                t3 + dt*(w2*sin(t1)*sec(t2) + w3*cos(t1)*sec(t2))];
             
             obj.F_lam = @(x1, x2, x3, v1, v2, v3, t1, t2, t3, w1, w2, w3, a1, a2, a3, dt) [ ...
-                1, 0, 0, dt*cos(t2)*cos(t3), -dt*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)),  dt*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)),  dt*(v2*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) + v3*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2))), dt*(v3*cos(t1)*cos(t2)*cos(t3) - v1*cos(t3)*sin(t2) + v2*cos(t2)*cos(t3)*sin(t1)), -dt*(v2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - v3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + v1*cos(t2)*sin(t3));
-                0, 1, 0, dt*cos(t2)*sin(t3),  dt*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)), -dt*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)), -dt*(v2*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + v3*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3))), dt*(v3*cos(t1)*cos(t2)*sin(t3) - v1*sin(t2)*sin(t3) + v2*cos(t2)*sin(t1)*sin(t3)),  dt*(v3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - v2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + v1*cos(t2)*cos(t3));
-                0, 0, 1,        -dt*sin(t2),                              dt*cos(t2)*sin(t1),                              dt*cos(t1)*cos(t2),                                                          dt*(v2*cos(t1)*cos(t2) - v3*cos(t2)*sin(t1)),                        -dt*(v1*cos(t2) + v3*cos(t1)*sin(t2) + v2*sin(t1)*sin(t2)),                                                                                                                          0;
-                0, 0, 0,                  1,                                               0,                                               0,  dt*(a2*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) + a3*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2))), dt*(a3*cos(t1)*cos(t2)*cos(t3) - a1*cos(t3)*sin(t2) + a2*cos(t2)*cos(t3)*sin(t1)), -dt*(a2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - a3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + a1*cos(t2)*sin(t3));
-                0, 0, 0,                  0,                                               1,                                               0, -dt*(a2*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + a3*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3))), dt*(a3*cos(t1)*cos(t2)*sin(t3) - a1*sin(t2)*sin(t3) + a2*cos(t2)*sin(t1)*sin(t3)),  dt*(a3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - a2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + a1*cos(t2)*cos(t3));
-                0, 0, 0,                  0,                                               0,                                               1,                                                          dt*(a2*cos(t1)*cos(t2) - a3*cos(t2)*sin(t1)),                        -dt*(a1*cos(t2) + a3*cos(t1)*sin(t2) + a2*sin(t1)*sin(t2)),                                                                                                                          0;
-                0, 0, 0,                  0,                                               0,                                               0,                                                                                                     1,                                                                                 0,                                                                                                                          0;
-                0, 0, 0,                  0,                                               0,                                               0,                                                                                                     0,                                                                                 1,                                                                                                                          0;
-                0, 0, 0,                  0,                                               0,                                               0,                                                                                                     0,                                                                                 0,                                                                                                                          1];
+                1, 0, 0, dt*cos(t2)*cos(t3), -dt*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)),  dt*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)),                              dt*(v2*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) + v3*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2))),                              dt*(v3*cos(t1)*cos(t2)*cos(t3) - v1*cos(t3)*sin(t2) + v2*cos(t2)*cos(t3)*sin(t1)), -dt*(v2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - v3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + v1*cos(t2)*sin(t3));
+                0, 1, 0, dt*cos(t2)*sin(t3),  dt*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)), -dt*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)),                             -dt*(v2*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + v3*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3))),                              dt*(v3*cos(t1)*cos(t2)*sin(t3) - v1*sin(t2)*sin(t3) + v2*cos(t2)*sin(t1)*sin(t3)),  dt*(v3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - v2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + v1*cos(t2)*cos(t3));
+                0, 0, 1,        -dt*sin(t2),                              dt*cos(t2)*sin(t1),                              dt*cos(t1)*cos(t2),                                                                                      dt*(v2*cos(t1)*cos(t2) - v3*cos(t2)*sin(t1)),                                                     -dt*(v1*cos(t2) + v3*cos(t1)*sin(t2) + v2*sin(t1)*sin(t2)),                                                                                                                          0;
+                0, 0, 0,                  1,                                               0,                                               0,                              dt*(a2*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) + a3*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2))),         -dt*((981*cos(t2))/100 + a1*cos(t3)*sin(t2) - a3*cos(t1)*cos(t2)*cos(t3) - a2*cos(t2)*cos(t3)*sin(t1)), -dt*(a2*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)) - a3*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) + a1*cos(t2)*sin(t3));
+                0, 0, 0,                  0,                                               1,                                               0, -dt*(a2*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3)) - (981*cos(t1)*cos(t2))/100 + a3*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3))), -dt*((981*sin(t1)*sin(t2))/100 + a1*sin(t2)*sin(t3) - a3*cos(t1)*cos(t2)*sin(t3) - a2*cos(t2)*sin(t1)*sin(t3)),  dt*(a3*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2)) - a2*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)) + a1*cos(t2)*cos(t3));
+                0, 0, 0,                  0,                                               0,                                               1,                                                         -dt*((981*cos(t2)*sin(t1))/100 - a2*cos(t1)*cos(t2) + a3*cos(t2)*sin(t1)),                         -dt*((981*cos(t1)*sin(t2))/100 + a1*cos(t2) + a3*cos(t1)*sin(t2) + a2*sin(t1)*sin(t2)),                                                                                                                          0;
+                0, 0, 0,                  0,                                               0,                                               0,                                                                                  dt*(w2*cos(t1)*tan(t2) - w3*sin(t1)*tan(t2)) + 1,                                                   dt*(w3*cos(t1)*(tan(t2)^2 + 1) + w2*sin(t1)*(tan(t2)^2 + 1)),                                                                                                                          0;
+                0, 0, 0,                  0,                                               0,                                               0,                                                                                                     -dt*(w3*cos(t1) + w2*sin(t1)),                                                                                                              1,                                                                                                                          0;
+                0, 0, 0,                  0,                                               0,                                               0,                                                                                  dt*((w2*cos(t1))/cos(t2) - (w3*sin(t1))/cos(t2)),                                           dt*((w3*cos(t1)*sin(t2))/cos(t2)^2 + (w2*sin(t1)*sin(t2))/cos(t2)^2),                                                                                                                          1];
+            
             
             obj.W_lam = @(x1, x2, x3, v1, v2, v3, t1, t2, t3, w1, w2, w3, a1, a2, a3, dt) [ ...
-                 0,  0,  0,                  0,                                               0,                                               0;
-                 0,  0,  0,                  0,                                               0,                                               0;
-                 0,  0,  0,                  0,                                               0,                                               0;
-                 0,  0,  0, dt*cos(t2)*cos(t3), -dt*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)),  dt*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2));
-                 0,  0,  0, dt*cos(t2)*sin(t3),  dt*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)), -dt*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3));
-                 0,  0,  0,        -dt*sin(t2),                              dt*cos(t2)*sin(t1),                              dt*cos(t1)*cos(t2);
-                dt,  0,  0,                  0,                                               0,                                               0;
-                 0, dt,  0,                  0,                                               0,                                               0;
-                 0,  0, dt,                  0,                                               0,                                               0];
+                 0,                    0,                    0,                  0,                                               0,                                               0;
+                 0,                    0,                    0,                  0,                                               0,                                               0;
+                 0,                    0,                    0,                  0,                                               0,                                               0;
+                 0,                    0,                    0, dt*cos(t2)*cos(t3), -dt*(cos(t1)*sin(t3) - cos(t3)*sin(t1)*sin(t2)),  dt*(sin(t1)*sin(t3) + cos(t1)*cos(t3)*sin(t2));
+                 0,                    0,                    0, dt*cos(t2)*sin(t3),  dt*(cos(t1)*cos(t3) + sin(t1)*sin(t2)*sin(t3)), -dt*(cos(t3)*sin(t1) - cos(t1)*sin(t2)*sin(t3));
+                 0,                    0,                    0,        -dt*sin(t2),                              dt*cos(t2)*sin(t1),                              dt*cos(t1)*cos(t2);
+                 dt,   dt*sin(t1)*tan(t2),   dt*cos(t1)*tan(t2),                  0,                                               0,                                               0;
+                 0,           dt*cos(t1),          -dt*sin(t1),                  0,                                               0,                                               0;
+                 0, (dt*sin(t1))/cos(t2), (dt*cos(t1))/cos(t2),                  0,                                               0,                                               0];
 
         end
         
@@ -88,6 +89,8 @@ classdef EKF < handle
             %Propoagate mean through non-linear dynamics
             obj.mu = obj.eval_mu(obj.mu, w, a, dt);
             obj.mu(7:9) = wrapToPi(obj.mu(7:9)); % so sad
+            disp("mu:")
+            disp(obj.mu(4:6))
         end
         
         %------------------------------------------------------------------

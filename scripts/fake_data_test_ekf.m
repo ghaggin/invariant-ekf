@@ -102,7 +102,7 @@ for i = 1:N-1
     % Save the outputs (for plotting)
     p_sol(:,i+1) = ekf.mu(1:3);
     theta_sol(:,i+1) = ekf.mu(7:9);
-    theta(:,i+1) = Log(gt.R{i});
+    theta(:,i+1) = rotm2eul(gt.R{i});
 end
 %--------------------------------------------------------------
 
