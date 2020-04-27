@@ -99,7 +99,7 @@ classdef LIEKF < handle
             % from slides (I don't know the derivation but they appear to work)
             g = [0;0;-9.81];
             vk = v + R*gamma1(wt*dt)*at*dt + g*dt;
-            pk = p + v*dt + R*gamma2(wt*dt)*at*(dt^2) + 0.5*g*(dt^2);
+            pk = p + v*dt + 0.5*R*gamma2(wt*dt)*at*(dt^2) + 0.5*g*(dt^2);
             phi = expm(obj.A(wt,at)*dt); 
             
             % Set the mean to the predicted value
