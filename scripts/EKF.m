@@ -107,7 +107,7 @@ classdef EKF < handle
             K = obj.Sigma * H' / S;
             
             obj.mu = obj.mu + K * nu;
-            obj.Sigma = (eye(9) - K * H) * obj.Sigma;
+            obj.Sigma = (eye(9) - K * H) * obj.Sigma *(eye(9) - K * H)' + K * eye(3)*.01 * K';
         end
         
         %------------------------------------------------------------------
