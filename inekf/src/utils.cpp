@@ -53,7 +53,7 @@ Matrix3d gamma2(const Vector3d& phi)
                (pow(norm_phi, 2) + 2 * cos(norm_phi) - 2) /
                    (2 * pow(norm_phi, 4)) * skew(phi) * skew(phi);
     }
-    return Matrix3d::Identity();
+    return 0.5 * Matrix3d::Identity();
 }
 
 /*****************************************************************************/

@@ -37,8 +37,7 @@ void IEKF::prediction(
 
     Matrix3d Rk1 = Rk * gamma0(w * dt);
     Vector3d vk1 = vk + Rk * gamma1(w * dt) * a * dt + g * dt;
-    Vector3d pk1 =
-        pk + vk * dt + 0.5 * Rk * gamma2(w * dt) * a * dt2 + 0.5 * g * dt2;
+    Vector3d pk1 = pk + vk * dt + Rk * gamma2(w * dt) * a * dt2 + 0.5 * g * dt2;
 
     mu_.block<3, 3>(0, 0) = Rk1;
     mu_.block<3, 1>(0, 3) = vk1;

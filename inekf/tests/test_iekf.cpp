@@ -218,23 +218,25 @@ BOOST_AUTO_TEST_CASE(prediction_const_acc)
 /*****************************************************************************/
 // Test with constant accel and gyro over 1 sec
 // Correct output determined from the prediction function
-// in scripts/LIEKF.m with default initial conditions, dt = 1 s
-// a = [1 2 3], w = [4 5 6]
+// in scripts/LIEKF.m with default initial conditions and
+//  w = [0.3, 0.5, 0.7]
+//  a = [0.11, 0.13, 0.17]
+//  dt = 0.19
 BOOST_AUTO_TEST_CASE(test_accel_and_gyro)
 {
     // Solution determined from scripts/LIEKF.m
     Matrix5d mu_sol =
-        (Matrix5d{} << -0.422960948855940, 0.052841708771363, 0.904605875261157,
-            1.686650850304059, 0.425996492893050, 0.880247438019417,
-            -0.213015890828015, 0.424014950343734, 1.932585941427824,
-            0.482297009692243, 0.215101100887779, 0.975618769842437,
-            0.043583624539450, -7.211588851392560, -4.257578503338903, 0, 0, 0,
+        (Matrix5d{} << 0.986676318023551, -0.129636068151535, 0.098307340955289,
+            0.020762064018513, 0.001977230017723, 0.135037560844690,
+            0.989557114126567, -0.050414036166701, 0.025168814239892,
+            0.002376210384301, -0.090745251184872, 0.063017519117396,
+            0.993878308281091, -1.831875751893571, -0.174019677424953, 0, 0, 0,
             1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000)
             .finished();
 
-    Vector3d a{1, 2, 3};
-    Vector3d w{4, 5, 6};
-    Timestamp time{Seconds{1}};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp time{Seconds{0.19}};
 
     IEKF iekf{};
 

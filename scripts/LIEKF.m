@@ -59,15 +59,18 @@ classdef LIEKF < handle
             skew = @(u) obj.skew(u);
 
             % Predicts position from gyro/accelerometer data
-            gamma0 = @(phi) eye(3) + sin(norm(phi,2))/norm(phi,2) * skew(phi) ...
-                + (1-cos(norm(phi,2)))/(norm(phi,2)^2) * (skew(phi))^2;
+            if norm(w) > 1e-8
+                gamma0 = @(phi) eye(3) + sin(norm(phi))/norm(phi) * skew(phi) + (1-cos(norm(phi)))/(norm(phi)^2) * skew(phi)^2;
 
-            gamma1 = @(phi) eye(3) + (1-cos(norm(phi,2)))/(norm(phi,2)^2) * (skew(phi)) ...
-                + (norm(phi,2) - sin(norm(phi,2)))/(norm(phi,2)^3) * skew(phi)^2;
+                gamma1 = @(phi) eye(3) + (1-cos(norm(phi)))/(norm(phi)^2) * skew(phi) + (norm(phi,2) - sin(norm(phi)))/(norm(phi)^3) * skew(phi)^2;
 
-            gamma2 = @(phi) 0.5*eye(3) + (norm(phi,2) - sin(norm(phi,2)))/(norm(phi,2)^3) * skew(phi) ... 
-                + (norm(phi,2)^2 + 2*cos(norm(phi,2)) - 2)/(2*(norm(phi,2)^4)) * skew(phi)^2;
-
+                gamma2 = @(phi) 0.5*eye(3) + (norm(phi,2) - sin(norm(phi,2)))/(norm(phi,2)^3) * skew(phi)+ (norm(phi,2)^2 + 2*cos(norm(phi,2)) - 2)/(2*(norm(phi,2)^4)) * skew(phi)^2;
+            else
+                gamma0 = @(phi) eye(3);
+                gamma1 = @(phi) eye(3);
+                gamma2 = @(phi) 1/2*eye(3);
+            end
+            
             % Bias stuff?
             wb = obj.bias(1:3); %TBC
             ab = obj.bias(4:6);
@@ -99,7 +102,7 @@ classdef LIEKF < handle
             % from slides (I don't know the derivation but they appear to work)
             g = [0;0;-9.81];
             vk = v + R*gamma1(wt*dt)*at*dt + g*dt;
-            pk = p + v*dt + 0.5*R*gamma2(wt*dt)*at*(dt^2) + 0.5*g*(dt^2);
+            pk = p + v*dt + R*gamma2(wt*dt)*at*(dt^2) + 0.5*g*(dt^2);
             phi = expm(obj.A(wt,at)*dt); 
             
             % Set the mean to the predicted value
