@@ -18,6 +18,7 @@ endif()
 
 # Set include directory
 include_directories(include)
+include_directories(/usr/include/eigen3)
 
 if(BUILD_TESTS)
   enable_testing()
