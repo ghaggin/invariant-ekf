@@ -11,6 +11,7 @@ classdef EKF < handle
         mu_lam;
         F_lam;
         W_lam;
+        H_mat;
     end
     
     methods
@@ -34,11 +35,15 @@ classdef EKF < handle
             syms a [3, 1]
             syms dt
 
+            syms z [3, 1]
+            
             rotm = obj.rot_mat(t);
             
-            obj.mu_sym = [x + rotm * v * dt; v + rotm * a * dt + [0;0;-9.81] * dt; t + w * dt];
-            obj.F_sym = jacobian(obj.mu_sym, [x; v; t]);
-            obj.W_sym = jacobian(obj.mu_sym, [w; a]);
+            mu_sym = [x + rotm * v * dt; v + rotm * a * dt + [0;0;-9.81] * dt; t + w * dt];
+            F_sym = jacobian(mu_sym, [x; v; t]);
+            W_sym = jacobian(mu_sym, [w; a]);
+            H_sym = jacobian(mu_sym(1:3), [x;v;t]);
+
             %}
             
             obj.mu_lam = @(x1, x2, x3, v1, v2, v3, t1, t2, t3, w1, w2, w3, a1, a2, a3, dt) [ ...
@@ -74,7 +79,9 @@ classdef EKF < handle
                  dt,   dt*sin(t1)*tan(t2),   dt*cos(t1)*tan(t2),                  0,                                               0,                                               0;
                  0,           dt*cos(t1),          -dt*sin(t1),                  0,                                               0,                                               0;
                  0, (dt*sin(t1))/cos(t2), (dt*cos(t1))/cos(t2),                  0,                                               0,                                               0];
-
+            
+             obj.H_mat = [eye(3), zeros(3), zeros(3)];
+            
         end
         
         %------------------------------------------------------------------
@@ -89,14 +96,18 @@ classdef EKF < handle
             %Propoagate mean through non-linear dynamics
             obj.mu = obj.eval_mu(obj.mu, w, a, dt);
             obj.mu(7:9) = wrapToPi(obj.mu(7:9)); % so sad
-            disp("mu:")
-            disp(obj.mu(4:6))
         end
         
         %------------------------------------------------------------------
         
-        function correction(obj, z)
-            % TODO
+        function correction(obj, gps)
+            nu = gps - obj.mu(1:3);
+            H = obj.H_mat;
+            S = H * obj.Sigma * H' + eye(3)*.01;
+            K = obj.Sigma * H' / S;
+            
+            obj.mu = obj.mu + K * nu;
+            obj.Sigma = (eye(9) - K * H) * obj.Sigma;
         end
         
         %------------------------------------------------------------------
@@ -147,6 +158,7 @@ classdef EKF < handle
             out = obj.W_lam(x1, x2, x3, v1, v2, v3, t1, t2, t3, w1, w2, w3, a1, a2, a3, dt);
             %double(subs(obj.W_sym));
         end
+        
     end
 end
 
