@@ -85,7 +85,7 @@ for i = 1:N-1
 
     % Set the acceleration from the fake data
     a = [accel.x(i); accel.y(i); accel.z(i)];
-    w = rotm2eul(expm(skew([omega.x(i); omega.y(i); omega.z(i)])))';
+    w = [omega.x(i); omega.y(i); omega.z(i)];
     
     % Run the ekf prediction step
     ekf.prediction(w, a, dt);
