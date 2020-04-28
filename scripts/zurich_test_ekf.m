@@ -16,7 +16,7 @@ skip = 100; %Number of steps to skip - set to 1 to see every step
 for i = 2:N-1
 
     % Prediction step
-    w = [omega.x(i); omega.y(i); omega.z(i)];
+    w = rotm2eul(expm(skew([omega.x(i); omega.y(i); omega.z(i)])));
     a = [accel.x(i); accel.y(i); accel.z(i)];
     dt = omega.t(i)-omega.t(i-1);
     filter.prediction(w,a,dt);
@@ -25,7 +25,7 @@ for i = 2:N-1
     obs = [gps.x(i), gps.y(i), gps.z(i)];
     filter.correction(obs);
     
-    % 
+    %{
     if(mod(i,skip)==0)
         fprintf('iteration: %d/%d\n',i,N);
         if(plot_progress)
@@ -35,7 +35,7 @@ for i = 2:N-1
             plot3(gps.x(i), gps.y(i), gps.z(i),'.k')
         end
     end
-    
+    %}
     %Save results
     X(:,i) = filter.mu(1:3);
 end
@@ -61,3 +61,11 @@ plot3(X(1,:),X(2,:),X(3,:), 'k.');
 plot3(gt.x, gt.y, gt.z, 'r.');
 legend('GPS','Estimate', 'GT');
 axis('equal');
+
+function ux  = skew(u)
+    ux = [
+        0 -u(3) u(2)
+        u(3) 0 -u(1)
+        -u(2) u(1) 0
+    ];
+end
