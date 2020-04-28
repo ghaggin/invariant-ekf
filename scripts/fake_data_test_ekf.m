@@ -49,7 +49,7 @@ dt_cor = 1/f_cor;
 % Note: the polynomial function created by 
 % gen_fake_data almost definitely wont be zero
 % at t = 0
-ekf = EKF(rotm2eul(init.R0)', init.p0, init.v0);
+ekf = EKF(Log(init.R0), init.p0, init.v0);
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
