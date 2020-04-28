@@ -20,7 +20,7 @@ time.dt = 1e-3;
 % to try to create really bad noise
 % with a ton of cross corelation between
 % states
-noise.add_noise = true;
+noise.add_noise = false;
 m = 100;
 Q1 = randn(3,3);
 Q2 = randn(3,3);
@@ -49,7 +49,7 @@ dt_cor = 1/f_cor;
 % Note: the polynomial function created by 
 % gen_fake_data almost definitely wont be zero
 % at t = 0
-ekf = EKF(Log(init.R0), init.p0, init.v0);
+ekf = EKF(rotm2eul(init.R0)', init.p0, init.v0);
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
@@ -62,6 +62,8 @@ N = length(t);
 % Initialize the position solution
 p_sol = zeros(3,N);
 p_sol(:,1) = init.p0;
+p_var = zeros(3, N);
+p_var(:,1) = 1;
 pos = [gt.x;gt.y;gt.z];
 
 % Initialize the theta solution to 
@@ -69,6 +71,8 @@ pos = [gt.x;gt.y;gt.z];
 theta = zeros(3, N);
 theta_sol = zeros(3, N);
 theta(:,1) = ekf.mu(1:3);
+theta_var = zeros(3, N);
+theta_var(:,1) = 1;
 theta_sol(:,1) = Log(gt.R{1});
 %--------------------------------------------------------------
 
@@ -81,12 +85,11 @@ for i = 1:N-1
 
     % Set the acceleration from the fake data
     a = [accel.x(i); accel.y(i); accel.z(i)];
-    w = [omega.x(i); omega.y(i); omega.z(i)];
+    w = rotm2eul(expm(skew([omega.x(i); omega.y(i); omega.z(i)])))';
     
     % Run the ekf prediction step
     ekf.prediction(w, a, dt);
     
-    %{
     % Run the ekf correction step
     if t(i) >= t_cor
         gps = [gt.x(i); gt.y(i); gt.z(i)];
@@ -95,14 +98,15 @@ for i = 1:N-1
         % Next correct at t + dt_cor
         t_cor = t(i) + dt_cor;
     end
-    %}
-    % Extract the state from the filter
-    %[R, p, v] = ekf.getState(); 
 
     % Save the outputs (for plotting)
+    variances = sqrt(diag(ekf.Sigma));
     p_sol(:,i+1) = ekf.mu(1:3);
-    theta_sol(:,i+1) = ekf.mu(7:9);
-    theta(:,i+1) = rotm2eul(gt.R{i});
+    theta_sol(:,i+1) = Log(eul2rotm(ekf.mu(7:9)'));
+    p_var(:,i+1) = variances(1:3);
+    theta_var(:,i+1) = variances(7:9);
+    
+    theta(:,i+1) = Log(gt.R{i});
 end
 %--------------------------------------------------------------
 
@@ -112,16 +116,22 @@ end
 figure;
 subplot(311)
 hold('on')
-plot(t, p_sol(1,:), 'r')
-plot(t, pos(1,:), 'k--')
+plot(t, p_sol(1,:), 'r');
+plot(t, p_sol(1,:) + p_var(1,:), 'g');
+plot(t, p_sol(1,:) - p_var(1,:), 'g');
+plot(t, pos(1,:), 'k--');
 title("Position")
 subplot(312)
 hold('on')
 plot(t, p_sol(2,:), 'r')
+plot(t, p_sol(2,:) + p_var(2,:), 'g');
+plot(t, p_sol(2,:) - p_var(2,:), 'g');
 plot(t, pos(2,:), 'k--')
 subplot(313)
 hold('on')
 plot(t, p_sol(3,:), 'r')
+plot(t, p_sol(3,:) + p_var(3,:), 'g');
+plot(t, p_sol(3,:) - p_var(3,:), 'g');
 plot(t, pos(3,:), 'k--')
 
 figure;
