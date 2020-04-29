@@ -30,7 +30,7 @@ public:
         std::multimap<Timestamp, Data>::iterator>;
 
 public:
-    DataLoader(std::string data_dir);
+    DataLoader(std::string data_dir, bool =true);
     OutDataType next();
     bool complete();
     Timestamp first_ts();
@@ -38,9 +38,12 @@ public:
 private:
     void parse_raw(std::string);
     void parse_gps(std::string);
+    void parse_gps_timestamp(std::string);
+    void parse_gps_from_gt(std::string);
 
 private:
     std::multimap<Timestamp, Data> data_;
+    std::unordered_map<unsigned long long, unsigned long long> gps_time_;
     bool done_;
     Timestamp first_ts_;
     Timestamp next_ts_;
