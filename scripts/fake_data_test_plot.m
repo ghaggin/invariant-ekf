@@ -13,12 +13,13 @@ time.dt = 1e-3;
 %
 % Q1 and Q2 are two random matrices to try to create really bad noise
 % with a ton of cross corelation between states
+rng(2)
 noise.add_noise = true;
 m = 100;
 Q1 = randn(3,3);
 Q2 = randn(3,3);
-noise.accel_noise = m*Q1*Q1';
-noise.gyro_noise = m*Q2*Q2';
+noise.accel_noise = (6*9.81)^2*eye(3);
+noise.gyro_noise = eye(3);
 
 % Set the frequency of the correction step (Hz)
 %  - Increase the frequency to test robustness of filter
@@ -41,6 +42,7 @@ theta_gt = zeros(3, N);
 theta_gt(:,1) = Log(gt.R{1});
 
 p_ekf = zeros(3,N);
+p_ekf_var = zeros(3,N);
 theta_ekf = zeros(3, N);
 p_liekf = zeros(3,N);
 theta_liekf = zeros(3, N);
@@ -52,6 +54,7 @@ theta_liekf = zeros(3, N);
 ekf = EKF(Log(init.R0), init.p0, init.v0);
 
 p_ekf(:,1) = ekf.mu(1:3);
+p_ekf_var(:,1) = sqrt(diag(ekf.Sigma(1:3,1:3)));
 theta_ekf(:,1) = ekf.mu(7:9);
 
 % -------------------------------------------------------------------------
@@ -78,11 +81,10 @@ for i = 1:N-1
     end
     
     % Save the outputs (for plotting)
-    %variances = sqrt(diag(ekf.Sigma));
+    variances = sqrt(diag(ekf.Sigma));
     p_ekf(:,i+1) = ekf.mu(1:3);
     theta_ekf(:,i+1) = Log(eul2rotm(ekf.mu(7:9)'));
-    %p_var(:,i+1) = variances(1:3);
-    %theta_var(:,i+1) = variances(7:9);
+    p_ekf_var(:,i+1) = variances(1:3);
     
     theta_gt(:,i+1) = Log(gt.R{i});
 end
@@ -127,11 +129,12 @@ end
 % Plot position and theta data to visualize
 % the operation of the filter
 figure;
-
 subplot(311)
 hold('on')
 plot(t, p_gt(1,:), 'k--', 'LineWidth', 2);
 plot(t, p_ekf(1,:), 'g', 'LineWidth', 1);
+plot(t, p_ekf(1,:)+p_ekf_var(1,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(1,:)-p_ekf_var(1,:), 'b', 'LineWidth', 1);
 plot(t, p_liekf(1,:), 'r', 'LineWidth', 1);
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Position");
@@ -139,15 +142,19 @@ subplot(312)
 hold('on')
 plot(t, p_gt(2,:),  'k--', 'LineWidth', 2)
 plot(t, p_ekf(2,:), 'g', 'LineWidth', 1);
+plot(t, p_ekf(2,:)+p_ekf_var(2,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(2,:)-p_ekf_var(2,:), 'b', 'LineWidth', 1);
 plot(t, p_liekf(2,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
-
 subplot(313)
 hold('on')
 plot(t, p_gt(3,:), 'k--', 'LineWidth', 2)
 plot(t, p_ekf(3,:), 'g', 'LineWidth', 1);
+plot(t, p_ekf(3,:)+p_ekf_var(3,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(3,:)-p_ekf_var(3,:), 'b', 'LineWidth', 1);
 plot(t, p_liekf(3,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
+print('position_noise', '-dpng')
 
 figure;
 subplot(311)
@@ -157,20 +164,19 @@ plot(t, theta_ekf(1,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(1,:), 'r', 'LineWidth', 1);
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Theta");
-
 subplot(312)
 hold('on')
 plot(t, theta_gt(2,:), 'k--', 'LineWidth', 2)
 plot(t, theta_ekf(2,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(2,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
-
 subplot(313)
 hold('on')
 plot(t, theta_gt(3,:),  'k--', 'LineWidth', 2)
 plot(t, theta_ekf(3,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(3,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
+print('theta_noise', '-dpng')
 
 % -------------------------------------------------------------------------
 % Helper functions, mostly for SO3 stuff
