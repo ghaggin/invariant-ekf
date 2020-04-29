@@ -25,7 +25,9 @@ classdef EKF < handle
             obj.mu = [p0; v0; theta0];
             obj.Sigma = eye(9);
             
-            [obj.Q_w_mat, obj.Q_a_mat, obj.V] = deal(eye(3) .* 0.1);
+            obj.Q_w_mat = eye(3) .* .0001;
+            obj.Q_a_mat = eye(3) .* .0001;
+            obj.V = eye(3) .* .0001;
             
             %{
             syms x [3, 1]
