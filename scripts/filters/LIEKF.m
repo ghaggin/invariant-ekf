@@ -11,8 +11,7 @@ classdef LIEKF < handle
         cov_ab;     %acc bias
         V;          %observation noise of position
         Q;          %all covariance in process model
-        %mu_cart
-        %sigma_cart
+        sigma_cart
     end
     methods
         function obj = LIEKF(R0, p0, v0)
