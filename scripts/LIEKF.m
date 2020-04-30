@@ -29,11 +29,11 @@ classdef LIEKF < handle
             obj.Sigma = eye(15); %TBT
             obj.bias = zeros(6,1);
            
-            obj.cov_g = eye(3); %TBT
-            obj.cov_a = eye(3);
+            obj.cov_g = eye(3)*20; %TBT
+            obj.cov_a = eye(3)*20;
             obj.cov_gb = eye(3);
             obj.cov_ab = eye(3);
-%             obj.V = diag([1,1,10]);
+%             obj.V = diag([1,1,10])*1000;
             obj.V =     [4.6778    1.9437    0.0858;
                          1.9437   11.5621    5.8445;
                          0.0858    5.8445   22.4051]*1000;
