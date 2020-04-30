@@ -7,3 +7,5 @@ CMakeCache.txt
 *.swp
 
 AGZ_subset
+*.eps
+*.png
