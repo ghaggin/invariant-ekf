@@ -33,13 +33,16 @@ classdef LIEKF < handle
             obj.cov_a = eye(3);
             obj.cov_gb = eye(3);
             obj.cov_ab = eye(3);
-            obj.V = eye(3);
+%             obj.V = diag([1,1,10]);
+            obj.V =     [4.6778    1.9437    0.0858;
+                         1.9437   11.5621    5.8445;
+                         0.0858    5.8445   22.4051]*1000;
             obj.Q = blkdiag([
                 obj.cov_g,zeros(3),zeros(3),zeros(3),zeros(3);
                 zeros(3),obj.cov_a,zeros(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),eye(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),zeros(3),obj.cov_gb,zeros(3),;
-                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab]);
+                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab])*1;
             obj.A = @(wt,at) [
                 -obj.skew(wt), zeros(3),  zeros(3), -eye(3), zeros(3); 
                 -obj.skew(at), -obj.skew(wt), zeros(3), zeros(3), -eye(3);
@@ -115,9 +118,11 @@ classdef LIEKF < handle
         end
                 
         %GPS 3x1 is this in R^3 ECEF/NED/ENU??
-        function correction(obj,GPS)    
+        function correction(obj,GPS)
+%             GPS(end) = 0;
             Y = [GPS;0;1];
             H = [zeros(3),zeros(3), eye(3), zeros(3), zeros(3)];
+            
             [R, ~, ~] = obj.getState();
             
             N = R' * obj.V * R;
@@ -127,7 +132,6 @@ classdef LIEKF < handle
             K_X = K(1:9,:);
             K_B = K(10:15,:);
             PI = [eye(3), zeros(3,2)];
-            
             nu = eye(5)/obj.mu * Y;        % Innovation
             delta_X = K_X * PI * nu;         
             delta_B = K_B * PI * nu;         
