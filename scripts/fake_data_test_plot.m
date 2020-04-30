@@ -97,7 +97,8 @@ end
 
 % -------------------------------------------------------------------------
 % LIEKF
-liekf = LIEKF(init.R0, init.p0, init.v0);
+liekf = LIEKF(init.R0, init.p0, init.v0, ...
+    eye(3)*.01, eye(3)*.01, eye(3)*.01, eye(3)*.01, eye(3)*.01);
 p_liekf(:,1) = init.p0;
 %p_liekf_var(:,1);
 theta_liekf(:,1) = Log(liekf.mu(1:3,1:3));
@@ -134,7 +135,7 @@ for i = 1:N-1
     
     vars = sqrt(diag(liekf.sigma_cart));
     p_liekf_var(:,i+1) = vars(4:6);
-    theta_liekf_var(:,i+1) = variances(7:9);
+    theta_liekf_var(:,i+1) = vars(7:9);
 end
 
 % -------------------------------------------------------------------------

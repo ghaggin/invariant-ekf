@@ -14,12 +14,19 @@ classdef LIEKF < handle
         sigma_cart
     end
     methods
-        function obj = LIEKF(R0, p0, v0)
+        function obj = LIEKF(R0, p0, v0, cov_g_, cov_a_, cov_gb_, cov_ab_, V_)
             % Set the initial state
             if nargin == 0
                 R0 = eye(3);
                 p0 = zeros(3,1);
                 v0 = zeros(3,1);
+                cov_g_ = eye(3) * 20;
+                cov_a_ = eye(3) * 20;
+                cov_gb_ = eye(3);
+                cov_ab_ = eye(3);
+                V_ = [4.6778    1.9437    0.0858;
+                      1.9437   11.5621    5.8445;
+                      0.0858    5.8445   22.4051]*1000;
             end
             obj.mu = blkdiag(R0, eye(2));
             obj.mu(1:3,4) = v0;
@@ -28,20 +35,18 @@ classdef LIEKF < handle
             obj.Sigma = eye(15); %TBT
             obj.bias = zeros(6,1);
            
-            obj.cov_g = eye(3)*20; %TBT
-            obj.cov_a = eye(3)*20;
-            obj.cov_gb = eye(3);
-            obj.cov_ab = eye(3);
-%             obj.V = diag([1,1,10])*1000;
-            obj.V =     [4.6778    1.9437    0.0858;
-                         1.9437   11.5621    5.8445;
-                         0.0858    5.8445   22.4051]*1000;
+            obj.cov_g = cov_g_; %TBT
+            obj.cov_a = cov_a_;
+            obj.cov_gb = cov_gb_;
+            obj.cov_ab = cov_ab_;
+            obj.V = V_;
+            
             obj.Q = blkdiag([
                 obj.cov_g,zeros(3),zeros(3),zeros(3),zeros(3);
                 zeros(3),obj.cov_a,zeros(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),eye(3),zeros(3),zeros(3);
                 zeros(3),zeros(3),zeros(3),obj.cov_gb,zeros(3),;
-                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab])*1;
+                zeros(3),zeros(3),zeros(3),zeros(3),obj.cov_ab]);
             obj.A = @(wt,at) [
                 -obj.skew(wt), zeros(3),  zeros(3), -eye(3), zeros(3); 
                 -obj.skew(at), -obj.skew(wt), zeros(3), zeros(3), -eye(3);
