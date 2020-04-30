@@ -2,6 +2,7 @@
 clear; close all;
 addpath('filters');
 addpath('helper');
+addpath('thirdparty/shadedErrorBar');
 
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
 
