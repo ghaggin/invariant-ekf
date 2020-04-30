@@ -134,8 +134,8 @@ for i = 1:N-1
     theta_liekf(:,i+1) = Log(R);
     
     vars = sqrt(diag(liekf.sigma_cart));
-    p_liekf_var(:,i+1) = 3*vars(7:9);
-    theta_liekf_var(:,i+1) = 3*vars(1:3);
+    p_liekf_var(:,i+1) = vars(7:9);
+    theta_liekf_var(:,i+1) = vars(1:3);
 end
 
 % -------------------------------------------------------------------------
@@ -147,10 +147,10 @@ hold('on')
 plot(t, p_gt(1,:), 'k--', 'LineWidth', 2);
 plot(t, p_ekf(1,:), 'g', 'LineWidth', 1);
 plot(t, p_liekf(1,:), 'r', 'LineWidth', 1);
-plot(t, p_ekf(1,:)+p_ekf_var(1,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(1,:)-p_ekf_var(1,:), 'b', 'LineWidth', 1);
-plot(t, p_liekf(1,:)+p_liekf_var(1,:), 'm', 'LineWidth', 1);
-plot(t, p_liekf(1,:)-p_liekf_var(1,:), 'm', 'LineWidth', 1);
+plot(t, p_ekf(1,:)+3*p_ekf_var(1,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(1,:)-3*p_ekf_var(1,:), 'b', 'LineWidth', 1);
+plot(t, p_liekf(1,:)+3*p_liekf_var(1,:), 'm', 'LineWidth', 1);
+plot(t, p_liekf(1,:)-3*p_liekf_var(1,:), 'm', 'LineWidth', 1);
 axis([0,2,-200,200])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Position");
@@ -158,10 +158,10 @@ subplot(312)
 hold('on')
 plot(t, p_gt(2,:),  'k--', 'LineWidth', 2)
 plot(t, p_ekf(2,:), 'g', 'LineWidth', 1);
-plot(t, p_ekf(2,:)+p_ekf_var(2,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(2,:)-p_ekf_var(2,:), 'b', 'LineWidth', 1);
-plot(t, p_liekf(2,:)+p_liekf_var(2,:), 'm', 'LineWidth', 1);
-plot(t, p_liekf(2,:)-p_liekf_var(2,:), 'm', 'LineWidth', 1);
+plot(t, p_ekf(2,:)+3*p_ekf_var(2,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(2,:)-3*p_ekf_var(2,:), 'b', 'LineWidth', 1);
+plot(t, p_liekf(2,:)+3*p_liekf_var(2,:), 'm', 'LineWidth', 1);
+plot(t, p_liekf(2,:)-3*p_liekf_var(2,:), 'm', 'LineWidth', 1);
 axis([0,2,-400,0])
 plot(t, p_liekf(2,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
@@ -170,10 +170,10 @@ hold('on')
 plot(t, p_gt(3,:), 'k--', 'LineWidth', 2)
 plot(t, p_ekf(3,:), 'g', 'LineWidth', 1);
 plot(t, p_liekf(3,:), 'r', 'LineWidth', 1)
-plot(t, p_ekf(3,:)+p_ekf_var(3,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(3,:)-p_ekf_var(3,:), 'b', 'LineWidth', 1);
-plot(t, p_liekf(3,:)+p_liekf_var(3,:), 'm', 'LineWidth', 1);
-plot(t, p_liekf(3,:)-p_liekf_var(3,:), 'm', 'LineWidth', 1);
+plot(t, p_ekf(3,:)+3*p_ekf_var(3,:), 'b', 'LineWidth', 1);
+plot(t, p_ekf(3,:)-3*p_ekf_var(3,:), 'b', 'LineWidth', 1);
+plot(t, p_liekf(3,:)+3*p_liekf_var(3,:), 'm', 'LineWidth', 1);
+plot(t, p_liekf(3,:)-3*p_liekf_var(3,:), 'm', 'LineWidth', 1);
 axis([0,2,-300,100])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 print('position_noise', '-dpng')
@@ -184,10 +184,10 @@ hold('on')
 plot(t, theta_gt(1,:), 'k--', 'LineWidth', 2);
 plot(t, theta_ekf(1,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(1,:), 'r', 'LineWidth', 1);
-plot(t, theta_ekf(1,:)+theta_ekf_var(1,:), 'b', 'LineWidth', 1);
-plot(t, theta_ekf(1,:)-theta_ekf_var(1,:), 'b', 'LineWidth', 1);
-plot(t, theta_liekf(1,:)+theta_liekf_var(1,:), 'm', 'LineWidth', 1);
-plot(t, theta_liekf(1,:)-theta_liekf_var(1,:), 'm', 'LineWidth', 1);
+plot(t, theta_ekf(1,:)+3*theta_ekf_var(1,:), 'b', 'LineWidth', 1);
+plot(t, theta_ekf(1,:)-3*theta_ekf_var(1,:), 'b', 'LineWidth', 1);
+plot(t, theta_liekf(1,:)+3*theta_liekf_var(1,:), 'm', 'LineWidth', 1);
+plot(t, theta_liekf(1,:)-3*theta_liekf_var(1,:), 'm', 'LineWidth', 1);
 axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Theta");
@@ -196,10 +196,10 @@ hold('on')
 plot(t, theta_gt(2,:), 'k--', 'LineWidth', 2)
 plot(t, theta_ekf(2,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(2,:), 'r', 'LineWidth', 1)
-plot(t, theta_ekf(2,:)+theta_ekf_var(2,:), 'b', 'LineWidth', 1);
-plot(t, theta_ekf(2,:)-theta_ekf_var(2,:), 'b', 'LineWidth', 1);
-plot(t, theta_liekf(2,:)+theta_liekf_var(2,:), 'm', 'LineWidth', 1);
-plot(t, theta_liekf(2,:)-theta_liekf_var(2,:), 'm', 'LineWidth', 1);
+plot(t, theta_ekf(2,:)+3*theta_ekf_var(2,:), 'b', 'LineWidth', 1);
+plot(t, theta_ekf(2,:)-3*theta_ekf_var(2,:), 'b', 'LineWidth', 1);
+plot(t, theta_liekf(2,:)+3*theta_liekf_var(2,:), 'm', 'LineWidth', 1);
+plot(t, theta_liekf(2,:)-3*theta_liekf_var(2,:), 'm', 'LineWidth', 1);
 axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 subplot(313)
@@ -207,10 +207,10 @@ hold('on')
 plot(t, theta_gt(3,:),  'k--', 'LineWidth', 2)
 plot(t, theta_ekf(3,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(3,:), 'r', 'LineWidth', 1)
-plot(t, theta_ekf(3,:)+theta_ekf_var(3,:), 'b', 'LineWidth', 1);
-plot(t, theta_ekf(3,:)-theta_ekf_var(3,:), 'b', 'LineWidth', 1);
-plot(t, theta_liekf(3,:)+theta_liekf_var(3,:), 'm', 'LineWidth', 1);
-plot(t, theta_liekf(3,:)-theta_liekf_var(3,:), 'm', 'LineWidth', 1);
+plot(t, theta_ekf(3,:)+3*theta_ekf_var(3,:), 'b', 'LineWidth', 1);
+plot(t, theta_ekf(3,:)-3*theta_ekf_var(3,:), 'b', 'LineWidth', 1);
+plot(t, theta_liekf(3,:)+3*theta_liekf_var(3,:), 'm', 'LineWidth', 1);
+plot(t, theta_liekf(3,:)-3*theta_liekf_var(3,:), 'm', 'LineWidth', 1);
 axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 print('theta_noise', '-dpng')
