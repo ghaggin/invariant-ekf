@@ -84,7 +84,9 @@ void IEKF::correction(const Vector3d& gps_lla)
     H.block<3, 3>(0, 6) = Matrix3d::Identity();
     Matrix3d Rk = R();
 
-    Matrix3d V = Matrix3d::Identity();
+    Matrix3d V;
+    V << 4.6778e3, 1.9437e3, 0.0858e3, 1.9437e3, 11.5621e3, 5.8445e3, 0.0858e3,
+        5.8445e3, 22.4051e3;
     Matrix3d N = Rk.transpose() * V * Rk;
 
     Matrix3d S = H * Sigma_ * H.transpose() + N;
@@ -104,8 +106,8 @@ void IEKF::correction(const Vector3d& gps_lla)
 
     mu_ = mu_ * xi.exp();
     bias_ = bias_ + delta_B;
-    Sigma_ = (Matrix15d::Identity() - K * H) * Sigma_ *
-                 (Matrix15d::Identity() - K * H).transpose() +
+    auto& Id15 = Matrix15d::Identity();
+    Sigma_ = (Id15 - K * H) * Sigma_ * (Id15 - K * H).transpose() +
              K * N * K.transpose();
 }
 
@@ -120,13 +122,12 @@ void IEKF::addImu(
     time_last_predict_ = timestamp;
 
     prediction(acc, gyro, dt);
-    time_ = timestamp;
 }
 
 void IEKF::addGps(const Timestamp& timestamp, const Vector3d& gps)
 {
     correction(gps);
-    time_ = timestamp;
+    time_last_gps_ = timestamp;
 }
 
 std::tuple<Matrix5d&, Matrix15d&, Timestamp&> IEKF::getState()

@@ -86,6 +86,11 @@ public:
         return mu_;
     }
 
+    const Matrix15d& Sigma() const
+    {
+        return Sigma_;
+    }
+
     double g() const
     {
         return g_;
@@ -105,6 +110,7 @@ private:
     Matrix15d Sigma_;
     Timestamp time_;
     Timestamp time_last_predict_;
+    Timestamp time_last_gps_;
     Vector6d bias_;
     bool origin_set_ = false;
     Vector3d origin_;  ///< origin coordinates in lla
