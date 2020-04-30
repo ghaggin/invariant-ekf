@@ -7,6 +7,8 @@ set(0, 'DefaultAxesFontSize', 12)
 % make sure to regenerate everything with a new seed if the
 % number of samples generated in the script changes
 rng(2)
+addpath('filters');
+addpath('helper');
 
 %--------------------------------------------------------------
 % Fake data time limits and resolution

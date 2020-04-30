@@ -1,4 +1,6 @@
 clear; close all; format compact;
+addpath('filters');
+addpath('helper');
 
 % -------------------------------------------------------------------------
 % Fake data time limits and resolution lower resolution with noise free

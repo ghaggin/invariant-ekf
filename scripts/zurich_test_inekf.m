@@ -1,5 +1,8 @@
-%% Test LIEKF filter
+% Test LIEKF filter
 clear; close all;
+addpath('filters');
+addpath('helper');
+
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
 
 % rx = rotx(95.538828);
