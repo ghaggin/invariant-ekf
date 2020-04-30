@@ -26,8 +26,8 @@ classdef EKF < handle
             obj.Sigma = eye(9);
             
             obj.Q_w_mat = eye(3) .* .0001;
-            obj.Q_a_mat = eye(3) .* .0001;
-            obj.V = eye(3) .* .0001;
+            obj.Q_a_mat = eye(3) .* .01;
+            obj.V = eye(3) .* .01;
             
             %{
             syms x [3, 1]
@@ -105,11 +105,11 @@ classdef EKF < handle
         function correction(obj, gps)
             nu = gps - obj.mu(1:3);
             H = obj.H_mat;
-            S = H * obj.Sigma * H' + eye(3)*.01;
+            S = H * obj.Sigma * H' + eye(3)*.001;
             K = obj.Sigma * H' / S;
             
             obj.mu = obj.mu + K * nu;
-            obj.Sigma = (eye(9) - K * H) * obj.Sigma *(eye(9) - K * H)' + K * eye(3)*.01 * K';
+            obj.Sigma = (eye(9) - K * H) * obj.Sigma;% *(eye(9) - K * H)' + K * eye(3)*.001 * K';
         end
         
         %------------------------------------------------------------------

@@ -1,6 +1,6 @@
-%% Test LIEKF filter
 clear; close all;
 
+% Load / process data
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
 test_N = length(omega); % Sets the number of IMU readings
 
@@ -14,52 +14,79 @@ meas_used = T_GPS <= t_x(end);
 t_gps = T_GPS(meas_used,:);
 xyz_gps = XYZ_GPS(meas_used,:); 
 
+% -------------------------------------------------------------------------
 % Initialize filter
-filter = EKF();
+
 skew = @(u) [0 -u(3) u(2);
         u(3) 0 -u(1);
         -u(2) u(1) 0];
 
-pos = zeros(3,test_N);
+ekf = EKF();
+inekf = LIEKF();
 
-dt = t_x(1);
-filter.prediction(w(1,:)',a(1,:)',dt);
-pos(:,1) = filter.mu(1:3);
+% Get first observation that happens after a prediction
+obsid = 1;
+while(t_gps(obsid) < t_x(1))
+    obsid = obsid + 1;
+end
 
-x_ctr = 2;
-gps_ctr = 1;
-next_gps_time = t_gps(gps_ctr);
+pos_ekf = zeros(3,test_N);
+pos_inekf = zeros(3,test_N);
 
-while x_ctr < length(t_x)
-    if t_x(x_ctr) < next_gps_time
-        dt = t_x(x_ctr) - t_x(x_ctr - 1);
-        filter.prediction(w(x_ctr,:)',a(x_ctr,:)',dt);
-        x_ctr = x_ctr + 1;
-        pos(:,x_ctr) = filter.mu(1:3);
-    elseif gps_ctr < length(t_gps)
-        gps = [xyz_gps(gps_ctr,1); xyz_gps(gps_ctr,2); xyz_gps(gps_ctr,3)];
-        filter.correction(gps);
-        gps_ctr = gps_ctr + 1;
-        next_gps_time = t_gps(gps_ctr);
+for i = 2:test_N
+    if i == 1
+        dt = t_x; 
     else
-        next_gps_time = inf;
+        dt = t_x(i) - t_x(i - 1);
+        
+        %Assume gyro/IMU are basically synchronous
+        ekf.prediction(w(i,:)',a(i,:)',dt);
+        inekf.prediction(w(i,:)',a(i,:)',dt);
+        
+        %Measurement update
+        if(i < test_N)
+            if(t_gps(obsid) > t_x(i) && t_x(i+1) > t_gps(obsid))
+                gps = [xyz_gps(obsid,1); xyz_gps(obsid,2); xyz_gps(obsid,3)];
+                ekf.correction(gps);
+                inekf.correction(gps);
+                obsid = min(obsid + 1, length(t_gps));
+            end
+        end
+        
+        %TBA: need to change covariance lie2Cartesian
+        pos_ekf(:,i) = ekf.mu(1:3);
+        pos_inekf(:,i) = inekf.mu(1:3,5);
+        if(mod(i,1000)==0)
+           fprintf('Iteration: %d/%d\n',i,test_N); 
+        end
     end
 end
 
-loadGroundTruthAGL;
+meas_used = T_GPS <= t_x(end);
+
+
+
+
+
+
+% load gt
+[~, ~, ~, ~, ~, x_gt, ~, y_gt, ~, z_gt] = loadGroundTruthAGL();
 x_gt = x_gt - x_gt(1); y_gt = y_gt - y_gt(1); z_gt = z_gt - z_gt(1);
 t_gt = linspace(0,T_X(end),length(x_gt));
 
 figure;
 hold on;
-plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'-g','DisplayName','GPS');
-plot3(x_gt, y_gt, z_gt,'-k','DisplayName','GT');
-plot3(pos(1,:), pos(2,:), pos(3,:),'-r','DisplayName','EKF');
+plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'b','LineWidth', 1);
+plot3(x_gt, y_gt, z_gt,'--k','LineWidth', 2);
+plot3(pos_ekf(1,:), pos_ekf(2,:), pos_ekf(3,:),'r','LineWidth', 1);
+plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'g','LineWidth', 1);
+
+legend('gps', 'gt', 'EKF', 'InEKF', 'location', 'eastoutside')
 hold off;
 axis equal;
 legend;
 
-
+%{
 
 figure;
 subplot(3,1,1);
@@ -83,5 +110,5 @@ plot(t_gt, z_gt);
 legend('Z_{est}','Z_{GPS}','Z_{GT}');
 axis([0,T_X(test_N),-30,60])
 
-
+%}
 

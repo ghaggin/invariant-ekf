@@ -44,6 +44,7 @@ theta_gt(:,1) = Log(gt.R{1});
 p_ekf = zeros(3,N);
 p_ekf_var = zeros(3,N);
 theta_ekf = zeros(3, N);
+theta_ekf_var = zeros(3,N);
 p_liekf = zeros(3,N);
 theta_liekf = zeros(3, N);
 
@@ -51,11 +52,12 @@ theta_liekf = zeros(3, N);
 % Initialize the filter (with initial condition)
 % Note: the polynomial function created by gen_fake_data almost definitely
 % wont be zero at t = 0
-ekf = EKF(Log(init.R0), init.p0, init.v0);
+ekf = EKF(rotm2eul(init.R0)', init.p0, init.v0);
 
 p_ekf(:,1) = ekf.mu(1:3);
 p_ekf_var(:,1) = sqrt(diag(ekf.Sigma(1:3,1:3)));
 theta_ekf(:,1) = ekf.mu(7:9);
+theta_ekf_var(:,1) = sqrt(diag(ekf.Sigma(7:9,7:9)));
 
 % -------------------------------------------------------------------------
 % Run the simulation on the data
@@ -85,6 +87,7 @@ for i = 1:N-1
     p_ekf(:,i+1) = ekf.mu(1:3);
     theta_ekf(:,i+1) = Log(eul2rotm(ekf.mu(7:9)'));
     p_ekf_var(:,i+1) = variances(1:3);
+    theta_ekf_var(:,i+1) = variances(7:9);
     
     theta_gt(:,i+1) = Log(gt.R{i});
 end
@@ -133,26 +136,29 @@ subplot(311)
 hold('on')
 plot(t, p_gt(1,:), 'k--', 'LineWidth', 2);
 plot(t, p_ekf(1,:), 'g', 'LineWidth', 1);
-plot(t, p_ekf(1,:)+p_ekf_var(1,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(1,:)-p_ekf_var(1,:), 'b', 'LineWidth', 1);
 plot(t, p_liekf(1,:), 'r', 'LineWidth', 1);
+%plot(t, p_ekf(1,:)+p_ekf_var(1,:), 'b', 'LineWidth', 1);
+%plot(t, p_ekf(1,:)-p_ekf_var(1,:), 'b', 'LineWidth', 1);
+%axis([0,2,-200,200])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Position");
 subplot(312)
 hold('on')
 plot(t, p_gt(2,:),  'k--', 'LineWidth', 2)
 plot(t, p_ekf(2,:), 'g', 'LineWidth', 1);
-plot(t, p_ekf(2,:)+p_ekf_var(2,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(2,:)-p_ekf_var(2,:), 'b', 'LineWidth', 1);
+%plot(t, p_ekf(2,:)+p_ekf_var(2,:), 'b', 'LineWidth', 1);
+%plot(t, p_ekf(2,:)-p_ekf_var(2,:), 'b', 'LineWidth', 1);
+%axis([0,2,-400,0])
 plot(t, p_liekf(2,:), 'r', 'LineWidth', 1)
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 subplot(313)
 hold('on')
 plot(t, p_gt(3,:), 'k--', 'LineWidth', 2)
 plot(t, p_ekf(3,:), 'g', 'LineWidth', 1);
-plot(t, p_ekf(3,:)+p_ekf_var(3,:), 'b', 'LineWidth', 1);
-plot(t, p_ekf(3,:)-p_ekf_var(3,:), 'b', 'LineWidth', 1);
 plot(t, p_liekf(3,:), 'r', 'LineWidth', 1)
+%plot(t, p_ekf(3,:)+p_ekf_var(3,:), 'b', 'LineWidth', 1);
+%plot(t, p_ekf(3,:)-p_ekf_var(3,:), 'b', 'LineWidth', 1);
+%axis([0,2,-300,100])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 print('position_noise', '-dpng')
 
@@ -162,6 +168,9 @@ hold('on')
 plot(t, theta_gt(1,:), 'k--', 'LineWidth', 2);
 plot(t, theta_ekf(1,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(1,:), 'r', 'LineWidth', 1);
+%plot(t, theta_ekf(1,:)+theta_ekf_var(1,:), 'b', 'LineWidth', 1);
+%plot(t, theta_ekf(1,:)-theta_ekf_var(1,:), 'b', 'LineWidth', 1);
+%axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 title("Theta");
 subplot(312)
@@ -169,12 +178,18 @@ hold('on')
 plot(t, theta_gt(2,:), 'k--', 'LineWidth', 2)
 plot(t, theta_ekf(2,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(2,:), 'r', 'LineWidth', 1)
+%plot(t, theta_ekf(2,:)+theta_ekf_var(2,:), 'b', 'LineWidth', 1);
+%plot(t, theta_ekf(2,:)-theta_ekf_var(2,:), 'b', 'LineWidth', 1);
+%axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 subplot(313)
 hold('on')
 plot(t, theta_gt(3,:),  'k--', 'LineWidth', 2)
 plot(t, theta_ekf(3,:), 'g', 'LineWidth', 1);
 plot(t, theta_liekf(3,:), 'r', 'LineWidth', 1)
+%plot(t, theta_ekf(3,:)+theta_ekf_var(3,:), 'b', 'LineWidth', 1);
+%plot(t, theta_ekf(3,:)-theta_ekf_var(3,:), 'b', 'LineWidth', 1);
+%axis([0,2,-7,7])
 legend('Ground Truth', 'EKF', 'LIEKF', 'location', 'eastoutside')
 print('theta_noise', '-dpng')
 
