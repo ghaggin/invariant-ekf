@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE test_example
 #include <boost/test/unit_test.hpp>
 
+#include <iostream>
 #include <utils.hpp>
 
 using namespace Eigen;
@@ -30,4 +31,35 @@ BOOST_AUTO_TEST_CASE(test_skew)
     Matrix3d nmt = -m.transpose();
 
     BOOST_CHECK(max_diff(m, nmt) < 1e-8);
+}
+
+// If these pass both ecef and enu conversions work
+// enu sol generated from matlab scripts
+BOOST_AUTO_TEST_CASE(gps_conversion)
+{
+    // std::cout << "hello!!!\n";
+    Vector3d gps;
+    Vector3d origin_gps;
+    Vector3d enu;
+    Vector3d enu_sol;
+
+    origin_gps << 40, 10, 1;
+
+    gps = origin_gps;
+
+    enu = lla_to_enu(gps, origin_gps);
+    enu_sol = Vector3d::Zero();
+
+    BOOST_CHECK(max_diff(enu, enu_sol) < 1e-8);
+
+    gps(0) = 41;
+    gps(1) = 11;
+    gps(2) = 1111;
+
+    enu_sol(0) = 0.839302494343232e5;
+    enu_sol(1) = 1.116794796570489e5;
+    enu_sol(2) = -0.004215912354852e5;
+    enu = lla_to_enu(gps, origin_gps);
+
+    BOOST_CHECK(max_diff(enu, enu_sol) < 1e-8);
 }

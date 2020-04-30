@@ -14,8 +14,8 @@ target_link_libraries(test_iekf iekf)
 # ##############################################################################
 # DataLoader
 add_library(DataLoader SHARED src/DataLoader.cpp)
-add_executable(test_data src/test_data_loader.cpp)
-target_link_libraries(test_data DataLoader)
+add_executable(iekf_example src/iekf_example.cpp)
+target_link_libraries(iekf_example DataLoader iekf)
 # ##############################################################################
 
 # ##############################################################################

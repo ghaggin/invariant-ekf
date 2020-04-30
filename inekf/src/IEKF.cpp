@@ -21,6 +21,14 @@ using Vector5d = Eigen::Matrix<double, 5, 1>;
 using Vector6d = Eigen::Matrix<double, 6, 1>;
 using Vector9d = Eigen::Matrix<double, 9, 1>;
 
+void IEKF::resetFilter(const Timestamp& time, const Vector3d& origin_lla)
+{
+    origin_ = origin_lla;
+    origin_set_ = true;
+    time_ = time;
+    time_last_predict_ = time;
+}
+
 void IEKF::prediction(
     const Vector3d& acc, const Vector3d& gyro, duration<double> dt_dur)
 {
@@ -30,8 +38,8 @@ void IEKF::prediction(
     const Matrix3d Rk = R();
     const Vector3d pk = p();
     const Vector3d vk = v();
-    const Vector3d& w = gyro;
-    const Vector3d& a = acc;
+    const Vector3d& w = gyro - bias_.block<3, 1>(0, 0);
+    const Vector3d& a = acc - bias_.block<3, 1>(3, 0);
 
     Vector3d g = (Vector3d() << 0, 0, -9.81).finished();
 
@@ -60,13 +68,19 @@ void IEKF::prediction(
         phi * Sigma_ * (phi.transpose()) + phi * Q * (phi.transpose()) * dt;
 }
 
-void IEKF::correction(const Vector3d& gps)
+void IEKF::correction(const Vector3d& gps_lla)
 {
+    // Set origin if this is the first measurement
+    if (!origin_set_) set_origin(gps_lla);
+
+    // Convert from lla (spherical) to enu (cartesian)
+    auto gps = lla_to_enu(gps_lla, origin_);
+
     Vector5d Y;
     Y.block<3, 1>(0, 0) = gps;
     Y(4) = 1;
 
-    Matrix<double, 3, 15> H;
+    Matrix<double, 3, 15> H = Matrix<double, 3, 15>::Zero();
     H.block<3, 3>(0, 6) = Matrix3d::Identity();
     Matrix3d Rk = R();
 
@@ -80,7 +94,7 @@ void IEKF::correction(const Vector3d& gps)
 
     Matrix<double, 3, 5> PI;
     PI.block<3, 3>(0, 0) = Matrix3d::Identity();
-    PI.block<3, 2>(3, 0) = Matrix<double, 3, 2>::Zero();
+    PI.block<3, 2>(0, 3) = Matrix<double, 3, 2>::Zero();
 
     Vector5d nu = mu_.inverse() * Y;
     Vector9d delta_X = K_X * PI * nu;

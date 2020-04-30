@@ -246,3 +246,41 @@ BOOST_AUTO_TEST_CASE(test_accel_and_gyro)
 
     BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
 }
+
+/*****************************************************************************/
+// Simple test, zero update should keep filter at origin
+BOOST_AUTO_TEST_CASE(test_update)
+{
+    IEKF iekf{};
+    Vector3d gps{0, 0, 0};       // equator, prime mer, msl
+    Timestamp time{Seconds{0}};  // doesnt matter for gps meas
+
+    iekf.addGps(time, gps);
+
+    Matrix5d mu = iekf.mu();
+    BOOST_CHECK(max_diff(mu, Id5) < 1e-8);
+}
+
+/*****************************************************************************/
+// Now give the filter a nonzero update, solution generated from matlab version
+// of the filter
+BOOST_AUTO_TEST_CASE(test_update2)
+{
+    Matrix5d mu_sol;
+    mu_sol << 1, 0, 0, 0, 1.111554670002041e5, 0, 1, 0, 0, 0.555946668845763e5,
+        0, 0, 1, 0, -0.024238932013875e5, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1;
+
+    IEKF iekf{};
+    Vector3d gps{1, 2, 3};
+    Timestamp time{Seconds{0}};  // doesnt matter for gps meas
+
+    // Set filter origin
+    // without this origin is set to first update measurement
+    iekf.resetFilter(time, Vector3d::Zero());
+
+    iekf.addGps(time, gps);
+
+    Matrix5d mu = iekf.mu();
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-6);  // big numbers
+}

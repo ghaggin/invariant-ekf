@@ -45,14 +45,20 @@ public:
     {
     }
 
-    void resetFilter(const Timestamp& time);
+    void resetFilter(const Timestamp& time, const Vector3d& origin_lla);
 
     // Add an IMU measurement to the filter
     void addImu(const Timestamp& timestamp, const Eigen::Vector3d& acc,
         const Eigen::Vector3d& gyro);
 
-    // Add a gps measurement
+    // Add a gps measurement in LLA form
     void addGps(const Timestamp& timestamp, const Eigen::Vector3d& gps);
+
+    void set_origin(Eigen::Vector3d gps_lla)
+    {
+        origin_ = gps_lla;
+        origin_set_ = true;
+    }
 
     // Return the state and time stamp
     std::tuple<Matrix5d&, Matrix15d&, Timestamp&> getState();
@@ -100,6 +106,8 @@ private:
     Timestamp time_;
     Timestamp time_last_predict_;
     Vector6d bias_;
+    bool origin_set_ = false;
+    Vector3d origin_;  ///< origin coordinates in lla
 
     const double g_ = 9.81;
 };

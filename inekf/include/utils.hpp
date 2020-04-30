@@ -30,3 +30,7 @@ Eigen::Matrix3d gamma1(const Eigen::Vector3d& phi);
 Eigen::Matrix3d gamma2(const Eigen::Vector3d& phi);
 
 Eigen::Matrix<double, 5, 5> makeTwist(const Eigen::Matrix<double, 9, 1>& u);
+
+// gps
+Eigen::Vector3d lla_to_ecef(Eigen::Vector3d lla);
+Eigen::Vector3d lla_to_enu(Eigen::Vector3d lla, Eigen::Vector3d origin_lla);

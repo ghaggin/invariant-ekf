@@ -1,7 +1,9 @@
+// clang-format off
 #include <DataLoader.hpp>
 #include <iostream>
 #include <cstdio>
 #include <fstream>
+#include <stdexcept>
 
 using std::ifstream;
 using std::getline;
@@ -33,39 +35,47 @@ DataLoader::OutDataType DataLoader::next() {
 
 void DataLoader::parse_gps(string fn) {
 
-    ifstream gpu_in(fn);
-    assert(gpu_in.is_open());
+    ifstream gps_in(fn);
+    if(!gps_in.is_open()) throw std::runtime_error("Could not open gps file");
 
     string line;
-    getline(gpu_in, line);
+    getline(gps_in, line);
 
     Vector3d prev_gps;
 
-    while (getline(gpu_in, line)) {
+    size_t line_num = 0;
+    while (getline(gps_in, line)) {
         unsigned long long ts;
         double lo, la, a;
         string str_spec {"%llu, %*u, %lf, %lf, %lf, %*s"};
         
-        sscanf(line.c_str(), str_spec.c_str(), &ts, &lo, &la, &a);
+        sscanf(line.c_str(), str_spec.c_str(), &ts, &la, &lo, &a);
 
         Timestamp ti {std::chrono::microseconds(ts)};
-        Vector3d gps {lo, la, a};
+        Vector3d gps {la, lo, a};
        
         if (gps != prev_gps) {
             data_.insert(make_pair(ti, Data{ti, DataType::gps, gps}));
             prev_gps = gps;
         }
+        ++line_num;
     }
+
+    std::cout << "Read " << line_num << " lines from " << fn << std::endl;
+
+    gps_in.close();
 }
 
 void DataLoader::parse_raw(string fn) {
 
     ifstream imu_in(fn);
-    assert(imu_in.is_open());
+
+    if(!imu_in.is_open()) throw std::runtime_error("Could not open imu file");
 
     string line;
     getline(imu_in, line);
 
+    size_t line_num = 0;
     while (getline(imu_in, line)) {
         unsigned long long ts;
         double ox, oy, oz, ax, ay, az, ax_b, ay_b, az_b;
@@ -82,5 +92,10 @@ void DataLoader::parse_raw(string fn) {
         data_.insert({make_pair(ti, Data{ti, DataType::omega, omega}), 
                       make_pair(ti, Data{ti, DataType::accel, accel}),
                       make_pair(ti, Data{ti, DataType::accel_bias, acc_bias})});
+        ++line_num;
     }
+
+    std::cout << "Read " << line_num << " lines from " << fn << std::endl;
+
+    imu_in.close();
 }

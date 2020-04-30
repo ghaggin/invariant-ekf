@@ -1,9 +1,11 @@
+// clang-format off
 #pragma once
 
 #include <string>
 #include <map>
 #include <chrono>
 #include <eigen3/Eigen/Dense>
+
 
 class DataLoader {
 public:
@@ -41,7 +43,7 @@ private:
 
 private:
     std::multimap<Timestamp, Data> data_;
-    bool done_;
+    bool done_ = false;
     Timestamp first_ts_;
     Timestamp next_ts_;
 };
