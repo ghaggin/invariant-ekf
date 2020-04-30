@@ -78,8 +78,8 @@ figure;
 hold on;
 plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'b','LineWidth', 1);
 plot3(x_gt, y_gt, z_gt,'--k','LineWidth', 2);
-plot3(pos_ekf(1,:), pos_ekf(2,:), pos_ekf(3,:),'r','LineWidth', 1);
-plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'g','LineWidth', 1);
+plot3(pos_ekf(1,:), pos_ekf(2,:), pos_ekf(3,:),'g','LineWidth', 1);
+plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'r','LineWidth', 1);
 
 legend('gps', 'gt', 'EKF', 'InEKF', 'location', 'eastoutside')
 hold off;

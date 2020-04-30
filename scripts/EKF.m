@@ -15,11 +15,12 @@ classdef EKF < handle
     end
     
     methods
-        function obj = EKF(theta0, p0, v0)
+        function obj = EKF(theta0, p0, v0, V_in)
             if nargin == 0
                 theta0 = zeros(3,1);
                 p0 = zeros(3,1);
                 v0 = zeros(3,1);
+                V_in = eye(3) * 0.01;
             end
             
             obj.mu = [p0; v0; theta0];
@@ -27,7 +28,7 @@ classdef EKF < handle
             
             obj.Q_w_mat = eye(3) .* .0001;
             obj.Q_a_mat = eye(3) .* .01;
-            obj.V = eye(3) .* .01;
+            obj.V = V_in;
             
             %{
             syms x [3, 1]
@@ -105,11 +106,12 @@ classdef EKF < handle
         function correction(obj, gps)
             nu = gps - obj.mu(1:3);
             H = obj.H_mat;
-            S = H * obj.Sigma * H' + eye(3)*.001;
+            
+            S = H * obj.Sigma * H' + obj.V;
             K = obj.Sigma * H' / S;
             
             obj.mu = obj.mu + K * nu;
-            obj.Sigma = (eye(9) - K * H) * obj.Sigma;% *(eye(9) - K * H)' + K * eye(3)*.001 * K';
+            obj.Sigma = (eye(9) - K * H) * obj.Sigma;
         end
         
         %------------------------------------------------------------------

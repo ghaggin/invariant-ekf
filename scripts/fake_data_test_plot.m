@@ -52,7 +52,7 @@ theta_liekf = zeros(3, N);
 % Initialize the filter (with initial condition)
 % Note: the polynomial function created by gen_fake_data almost definitely
 % wont be zero at t = 0
-ekf = EKF(rotm2eul(init.R0)', init.p0, init.v0);
+ekf = EKF(rotm2eul(init.R0)', init.p0, init.v0, eye(3) * 100);
 
 p_ekf(:,1) = ekf.mu(1:3);
 p_ekf_var(:,1) = sqrt(diag(ekf.Sigma(1:3,1:3)));

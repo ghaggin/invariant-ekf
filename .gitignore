@@ -9,3 +9,4 @@ CMakeCache.txt
 AGZ_subset
 *.eps
 *.png
+.DS_Store
