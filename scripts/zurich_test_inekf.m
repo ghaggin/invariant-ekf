@@ -1,5 +1,8 @@
-%% Test LIEKF filter
+% Test LIEKF filter
 clear; close all;
+addpath('filters');
+addpath('helper');
+
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
 
 % rx = rotx(95.538828);
@@ -71,7 +74,7 @@ plot3(pos(1,:), pos(2,:), pos(3,:),'.r','DisplayName','LIEKF');
 legend;
 view(3);
 
-loadGroundTruthAGL
+[~, ~, ~, ~, ~, x_gt, ~, y_gt, ~, z_gt] = loadGroundTruthAGL();
 x_gt = x_gt - x_gt(1); y_gt = y_gt - y_gt(1); z_gt = z_gt - z_gt(1);
 t_gt = linspace(0,T_X(end),length(x_gt));
 
