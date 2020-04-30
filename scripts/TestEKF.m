@@ -64,51 +64,60 @@ end
 
 meas_used = T_GPS <= t_x(end);
 
-
-
-
-
-
 % load gt
 [~, ~, ~, ~, ~, x_gt, ~, y_gt, ~, z_gt] = loadGroundTruthAGL();
 x_gt = x_gt - x_gt(1); y_gt = y_gt - y_gt(1); z_gt = z_gt - z_gt(1);
 t_gt = linspace(0,T_X(end),length(x_gt));
 
-figure;
+% -------------------------------------------------------------------------
+% traj plot
+figure('DefaultAxesFontSize',14)
 hold on;
-plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'b','LineWidth', 1);
-plot3(x_gt, y_gt, z_gt,'--k','LineWidth', 2);
-plot3(pos_ekf(1,:), pos_ekf(2,:), pos_ekf(3,:),'g','LineWidth', 1);
-plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'r','LineWidth', 1);
-
-legend('gps', 'gt', 'EKF', 'InEKF', 'location', 'eastoutside')
+plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'b','LineWidth', 2);
+plot3(x_gt, y_gt, z_gt,'--k','LineWidth', 4);
+plot3(pos_ekf(1,:), pos_ekf(2,:), pos_ekf(3,:),'g','LineWidth', 2);
+plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'r','LineWidth', 2);
+legend('gps', 'gt', 'EKF', 'InEKF', 'location', 'southeast')
 hold off;
 axis equal;
-legend;
 
-%{
+figure('DefaultAxesFontSize',14)
+hold on;
+plot3(XYZ_GPS(:,1), XYZ_GPS(:,2), XYZ_GPS(:,3),'b','LineWidth', 2);
+plot3(x_gt, y_gt, z_gt,'--k','LineWidth', 4);
+plot3(pos_inekf(1,:), pos_inekf(2,:), pos_inekf(3,:),'r','LineWidth', 2);
+legend('gps', 'gt', 'InEKF', 'location', 'southeast')
+hold off;
+axis equal;
 
+% -------------------------------------------------------------------------
+% axis plot
 figure;
 subplot(3,1,1);
-plot(T_X(1:test_N),  pos(1,:)); hold on;
-plot(t_gps, XYZ_GPS(meas_used,1));
-plot(t_gt, x_gt);
-legend('X_{est}','X_{GPS}','X_{GT}');
+hold on;
+plot(t_gps, XYZ_GPS(meas_used,1), 'b', 'LineWidth', 1);
+plot(t_gt, x_gt, 'k--', 'LineWidth', 2);
+plot(T_X(1:test_N),  pos_ekf(1,:), 'g', 'LineWidth', 1);
+plot(T_X(1:test_N),  pos_inekf(1,:), 'r', 'LineWidth', 1);
+legend('X_{GPS}','X_{GT}','X_{EKF}', 'X_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-200,200])
-
+%
 subplot(3,1,2);
-plot(T_X(1:test_N),  pos(2,:)); hold on;
-plot(t_gps, XYZ_GPS(meas_used,2));
-plot(t_gt, y_gt);
-legend('Y_{est}','Y_{GPS}','Y_{GT}');
+hold on;
+plot(t_gps, XYZ_GPS(meas_used,2), 'b', 'LineWidth', 1);
+plot(t_gt, y_gt, 'k--', 'LineWidth', 2);
+plot(T_X(1:test_N),  pos_ekf(2,:), 'g', 'LineWidth', 1);
+plot(T_X(1:test_N),  pos_inekf(2,:), 'r', 'LineWidth', 1);
+legend('Y_{GPS}','Y_{GT}','Y_{EKF}', 'Y_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-250,350])
-
+%
 subplot(3,1,3);
-plot(T_X(1:test_N),  pos(3,:)); hold on;
-plot(t_gps, XYZ_GPS(meas_used,3));
-plot(t_gt, z_gt);
-legend('Z_{est}','Z_{GPS}','Z_{GT}');
+hold on;
+plot(t_gps, XYZ_GPS(meas_used,3), 'b', 'LineWidth', 1);
+plot(t_gt, z_gt, 'k--', 'LineWidth', 2);
+plot(T_X(1:test_N),  pos_ekf(3,:), 'g', 'LineWidth', 1);
+plot(T_X(1:test_N),  pos_inekf(3,:), 'r', 'LineWidth', 1);
+legend('Z_{GPS}','Z_{GT}','Z_{EKF}', 'Z_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-30,60])
 
-%}
 
