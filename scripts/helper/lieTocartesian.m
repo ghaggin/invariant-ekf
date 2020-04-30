@@ -3,7 +3,7 @@ function lieTocartesian(filter)
     kappa = 2;
     X = logm(filter.mu);
     
-    x = [X(1:3, 4); X(1:3, 5); X(3, 2); X(1, 3); X(2, 1); filter.bias];
+    x = [X(3, 2); X(1, 3); X(2, 1); X(1:3,4); X(1:3, 5); filter.bias];
     ut = unscented_transform(x, filter.Sigma, f, kappa);
     
     ut.propagate();
