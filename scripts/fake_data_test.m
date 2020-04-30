@@ -1,4 +1,12 @@
 clear; close all; format compact;
+set(0, 'DefaultTextInterpreter', 'latex');
+set(0, 'DefaultLegendInterpreter', 'latex');
+set(0, 'DefaultAxesFontSize', 12)
+
+% Changing the number of random samples will break this seed
+% make sure to regenerate everything with a new seed if the
+% number of samples generated in the script changes
+rng(2)
 
 %--------------------------------------------------------------
 % Fake data time limits and resolution
@@ -21,18 +29,20 @@ time.dt = 1e-3;
 % with a ton of cross corelation between
 % states
 noise.add_noise = true;
-m = 100;
-Q1 = randn(3,3);
-Q2 = randn(3,3);
-noise.accel_noise = m*Q1*Q1';
-noise.gyro_noise = m*Q2*Q2';
+% m = 100;
+Q1 = randn(3,3); % dont comment out so seeding works 
+Q2 = randn(3,3); % dont comment out so seeding works
+% noise.accel_noise = m*Q1*Q1';
+% noise.gyro_noise = m*Q2*Q2';
+noise.accel_noise = ((6*9.81)^2)*eye(3);
+noise.gyro_noise = (1^2)*eye(3);
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
 % Set the frequency of the correction step (Hz)
 %  - Increase the frequency to test robustness of filter
 %    to slow updates
-f_cor = 1;
+f_cor = 10;
 dt_cor = 1/f_cor;
 %--------------------------------------------------------------
 
@@ -45,11 +55,32 @@ dt_cor = 1/f_cor;
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
+% Position
+% Sig_p0 = (25^2)*eye(3);
+% L = chol(Sig_p0, 'lower');
+% p0 = init.p0  + L*randn(3,1)
+p0 = init.p0;
+
+% Velocity
+% Sig_v0 = (5^2)*eye(3);
+% L = chol(Sig_p0, 'lower');
+% v0 = init.v0  + L*randn(3,1)
+v0 = init.v0;
+
+% Rotation
+% Sig_R0 = (0.05^2)*eye(3);
+% L = chol(Sig_R0, 'lower');
+% delta = L*randn(3,1);
+% R0 = init.R0 * expm(skew(delta))
+R0 = init.R0;
+%--------------------------------------------------------------
+
+%--------------------------------------------------------------
 % Initialize the filter (with initial condition)
 % Note: the polynomial function created by 
 % gen_fake_data almost definitely wont be zero
 % at t = 0
-ekf = LIEKF(init.R0, init.p0, init.v0)
+ekf = LIEKF(R0, p0, v0)
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
@@ -61,14 +92,15 @@ N = length(t);
 
 % Initialize the position solution
 p_sol = zeros(3,N);
-p_sol(:,1) = init.p0;
+p_sol(:,1) = ekf.mu(1:3, 5);
 pos = [gt.x;gt.y;gt.z];
 
 % Initialize the theta solution to 
 % visualize the rotation matrix
 theta = zeros(3, N);
-theta(:,1) = Log(ekf.mu(1:3,1:3));
-theta_sol(:,1) = Log(gt.R{1});
+theta_sol = zeros(3, N);
+theta(:,1) = Log(gt.R{1});
+theta_sol(:,1) = Log(ekf.mu(1:3,1:3));
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
@@ -100,6 +132,8 @@ for i = 1:N-1
     % Save the outputs (for plotting)
     p_sol(:,i+1) = p;
     theta_sol(:,i+1) = Log(R);
+
+    % Save theta from gt (saves extra loop)
     theta(:,i+1) = Log(gt.R{i});
 end
 %--------------------------------------------------------------
@@ -112,30 +146,40 @@ subplot(311)
 hold('on')
 plot(t, p_sol(1,:), 'r')
 plot(t, pos(1,:), 'k--')
-title("Position")
+ylabel('x')
 subplot(312)
 hold('on')
 plot(t, p_sol(2,:), 'r')
 plot(t, pos(2,:), 'k--')
+ylabel('y')
 subplot(313)
 hold('on')
 plot(t, p_sol(3,:), 'r')
 plot(t, pos(3,:), 'k--')
+legend('Estimation', 'Ground Truth', 'Location', 'northeast')
+xlabel('Time')
+ylabel('z')
+saveas(gcf, 'fake_data_pos.png', 'png')
 
 figure;
 subplot(311)
 hold('on')
 plot(t, theta_sol(1,:), 'r')
 plot(t, theta(1,:), 'k--')
-title("Theta")
+ylabel('$\theta_1$')
 subplot(312)
 hold('on')
 plot(t, theta_sol(2,:), 'r')
 plot(t, theta(2,:), 'k--')
+ylabel('$\theta_2$')
 subplot(313)
 hold('on')
 plot(t, theta_sol(3,:), 'r')
 plot(t, theta(3,:), 'k--')
+legend('Estimation', 'Ground Truth', 'Location', 'northeast')
+xlabel('Time')
+ylabel('$\theta_3$')
+saveas(gcf, 'fake_data_ang.png', 'png')
 %--------------------------------------------------------------
 
 

@@ -284,3 +284,175 @@ BOOST_AUTO_TEST_CASE(test_update2)
 
     BOOST_CHECK(max_diff(mu, mu_sol) < 1e-6);  // big numbers
 }
+
+BOOST_AUTO_TEST_CASE(test_two_predictions)
+{
+    IEKF iekf{};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t1{Seconds{0.19}};
+    iekf.addImu(t1, a, w);
+
+    // Next time stamp (same meas)
+    Timestamp t2{Seconds{0.27}};
+    iekf.addImu(t2, a, w);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;
+    mu_sol << 0.973162730597739, -0.181659800386756, 0.141258687162937,
+        0.029396711070180, 0.003984086586539, 0.192539774468753,
+        0.978965383441471, -0.067492320087659, 0.036044893440882,
+        0.004823667922829, -0.126026723448141, 0.092878926278987,
+        0.987669362707069, -2.603344942916421, -0.351427942767680, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+}
+
+BOOST_AUTO_TEST_CASE(test_predict_then_correct)
+{
+    IEKF iekf{};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t1{Seconds{0.19}};
+    iekf.addImu(t1, a, w);
+
+    // Next time stamp (same meas)
+    Timestamp t2{Seconds{0.27}};
+    Vector3d gps{0, 0, 0};
+    iekf.addGps(t2, gps);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;
+    mu_sol << 0.986693433490178, -0.129647882481378, 0.098119798590595,
+        0.020555963014757, 0.000876004775617, 0.135058037659745,
+        0.989542800730808, -0.050639628605745, 0.024911962997068,
+        0.001052764543022, -0.090528419686102, 0.063217656472885,
+        0.993885372233243, -1.813931200473841, -0.077918649513698, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+}
+
+BOOST_AUTO_TEST_CASE(test_correct_then_predict)
+{
+    IEKF iekf{};
+
+    Timestamp t1{Seconds{0.19}};
+    Vector3d gps{0, 0, 0};
+    iekf.addGps(t1, gps);
+
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t2{Seconds{0.27}};
+    iekf.addImu(t2, a, w);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;
+    mu_sol << 0.973162730597739, -0.181659800386756, 0.141258687162937,
+        0.029396711070180, 0.003984086586539, 0.192539774468753,
+        0.978965383441471, -0.067492320087659, 0.036044893440882,
+        0.004823667922829, -0.126026723448141, 0.092878926278987,
+        0.987669362707069, -2.603344942916421, -0.351427942767680, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+}
+
+BOOST_AUTO_TEST_CASE(test_predict_correct2)
+{
+    IEKF iekf{};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t1{Seconds{0.19}};
+    iekf.addImu(t1, a, w);
+
+    // Next time stamp (same meas)
+    Timestamp t2{Seconds{0.27}};
+    Vector3d gps{0, 0, 0};
+    iekf.addGps(t2, gps);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;
+    mu_sol << 0.986693433490178, -0.129647882481378, 0.098119798590595,
+        0.020555963014757, 0.000876004775617, 0.135058037659745,
+        0.989542800730808, -0.050639628605745, 0.024911962997068,
+        0.001052764543022, -0.090528419686102, 0.063217656472885,
+        0.993885372233243, -1.813931200473841, -0.077918649513698, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+}
+
+/*****************************************************************************/
+BOOST_AUTO_TEST_CASE(test_predict_correct3)
+{
+    IEKF iekf{};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t1{Seconds{0.19}};
+    iekf.addImu(t1, a, w);
+
+    // Next time stamp (same meas)
+    Timestamp t2{Seconds{0.27}};
+    iekf.addImu(t2, a, w);
+
+    // Add correction
+    Vector3d gps = Vector3d::Zero();
+    Timestamp t3{Seconds{0.53}};
+    iekf.addGps(t3, gps);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;  // solution from matlab
+    mu_sol << 0.973255763823231, -0.181727681256770, 0.140528531088517,
+        0.028814444001715, 0.001612373862480, 0.192651428928085,
+        0.978881893938724, -0.068378831891927, 0.035268446408571,
+        0.001951947862742, -0.125134508097588, 0.093623114581685,
+        0.987712542847968, -2.552727205507384, -0.148982331045971, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    std::cout << max_diff(mu, mu_sol) << std::endl;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+
+    std::cout << mu << std::endl;
+    std::cout << mu_sol << std::endl;
+}
+
+/*****************************************************************************/
+BOOST_AUTO_TEST_CASE(test_predict_correct4)
+{
+    IEKF iekf{};
+    Vector3d w{0.3, 0.5, 0.7};
+    Vector3d a{0.11, 0.13, 0.17};
+    Timestamp t1{Seconds{0.19}};
+    iekf.addImu(t1, a, w);
+
+    // Next time stamp (same meas)
+    Timestamp t2{Seconds{0.27}};
+    iekf.addImu(t2, a, w);
+
+    Timestamp t4{Seconds{0.57}};
+    iekf.addImu(t4, a, w);
+
+    // Add correction
+    Vector3d gps = Vector3d::Zero();
+    Timestamp t5{Seconds{0.83}};
+    iekf.addGps(t5, gps);
+
+    Matrix5d mu = iekf.mu();
+    Matrix5d mu_sol;  // solution from matlab
+    mu_sol << 0.885544010270727, -0.360280157014254, 0.293274639775456,
+        0.054586397620639, -0.001163044332474, 0.408845094508917,
+        0.904173748861653, -0.123755891033354, 0.065149336186669,
+        -0.001654357353935, -0.220584438638890, 0.229495185856368,
+        0.947984422392645, -5.022384894436503, -0.517530792432281, 0, 0, 0,
+        1.000000000000000, 0, 0, 0, 0, 0, 1.000000000000000;
+
+    std::cout << max_diff(mu, mu_sol) << std::endl;
+
+    BOOST_CHECK(max_diff(mu, mu_sol) < 1e-8);
+
+    std::cout << mu << std::endl;
+    std::cout << mu_sol << std::endl;
+}

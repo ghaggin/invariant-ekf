@@ -158,6 +158,9 @@ function [R, omega] = gen_rot(ord, max_val, t)
     [ty_p, ~, ~] = make_poly(ord, max_val);
     [tz_p, ~, ~] = make_poly(ord, max_val);
     t = [polyval(tx_p, t); polyval(ty_p, t); polyval(tz_p, t)];
+    fprintf("Ang poly: [%f %f %f %f %f]\n", tx_p);
+    fprintf("Ang poly: [%f %f %f %f %f]\n", ty_p);
+    fprintf("Ang poly: [%f %f %f %f %f]\n", tz_p);
 
     % Generate the rotation matrices
     % from the t data and store in cell
@@ -180,6 +183,8 @@ end
 % Generate the pos, vel, acc (pva) for the world frame
 function [pos, vel, acc] = gen_pva(ord, max_val, t)
     [p_p, v_p, a_p] = make_poly(ord, max_val);
+    fprintf("Pos poly: [%f %f %f %f %f]\n", p_p);
+    
     pos = polyval(p_p, t);
     vel = polyval(v_p, t);
     acc = polyval(a_p, t);
