@@ -1,7 +1,7 @@
 clear; close all; format compact;
 addpath('filters');
 addpath('helper');
-addpath('thirdparty/ShadedErrorBar');
+addpath('thirdparty/shadedErrorBar');
 % -------------------------------------------------------------------------
 % Fake data time limits and resolution lower resolution with noise free
 % data should cause the prediction to improve.
