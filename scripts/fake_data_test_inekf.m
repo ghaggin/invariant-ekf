@@ -9,6 +9,7 @@ set(0, 'DefaultAxesFontSize', 12)
 rng(2)
 addpath('filters');
 addpath('helper');
+addpath('thirdparty/shadedErrorBar');
 
 %--------------------------------------------------------------
 % Fake data time limits and resolution
