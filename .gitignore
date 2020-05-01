@@ -7,8 +7,8 @@ CMakeCache.txt
 *.swp
 
 AGZ_subset
-*.eps
-*.png
+# *.eps
+# *.png
 
 .DS_Store
 *.m~
