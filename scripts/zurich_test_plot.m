@@ -1,6 +1,7 @@
 clear; close all;
 addpath('filters');
 addpath('helper');
+addpath('thirdparty/shadedErrorBar');
 
 % Load / process data
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
@@ -34,6 +35,9 @@ end
 
 pos_ekf = zeros(3,test_N);
 pos_inekf = zeros(3,test_N);
+std_ekf = zeros(3,test_N);
+std_inekf = zeros(3,test_N);
+
 
 for i = 2:test_N
     if i == 1
@@ -45,6 +49,7 @@ for i = 2:test_N
         ekf.prediction(w(i,:)',a(i,:)',dt);
         inekf.prediction(w(i,:)',a(i,:)',dt);
         
+        
         %Measurement update
         if(i < test_N)
             if(t_gps(obsid) > t_x(i) && t_x(i+1) > t_gps(obsid))
@@ -55,9 +60,16 @@ for i = 2:test_N
             end
         end
         
-        %TBA: need to change covariance lie2Cartesian
+        lieTocartesian(inekf)
+        
         pos_ekf(:,i) = ekf.mu(1:3);
+        variances = sqrt(diag(ekf.Sigma));
+        std_ekf(:,i) = Log(eul2rotm(ekf.mu(1:3)'));
+        
         pos_inekf(:,i) = inekf.mu(1:3,5);
+        vars = sqrt(diag(inekf.sigma_cart));
+        std_inekf(:,i) = vars(7:9);
+        
         if(mod(i,1000)==0)
            fprintf('Iteration: %d/%d\n',i,test_N); 
         end
@@ -99,8 +111,8 @@ subplot(3,1,1);
 hold on;
 plot(t_gps, XYZ_GPS(meas_used,1), 'b', 'LineWidth', 1);
 plot(t_gt, x_gt, 'k--', 'LineWidth', 2);
-plot(T_X(1:test_N),  pos_ekf(1,:), 'g', 'LineWidth', 1);
-plot(T_X(1:test_N),  pos_inekf(1,:), 'r', 'LineWidth', 1);
+shadedErrorBar(T_X(1:test_N), pos_ekf(1,:), 3*std_ekf(1,:), 'lineProps', {'g', 'LineWidth', 1})
+shadedErrorBar(T_X(1:test_N), pos_inekf(1,:), 3*std_inekf(1,:), 'lineProps', {'r', 'LineWidth', 1})
 legend('X_{GPS}','X_{GT}','X_{EKF}', 'X_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-200,200])
 %
@@ -108,8 +120,8 @@ subplot(3,1,2);
 hold on;
 plot(t_gps, XYZ_GPS(meas_used,2), 'b', 'LineWidth', 1);
 plot(t_gt, y_gt, 'k--', 'LineWidth', 2);
-plot(T_X(1:test_N),  pos_ekf(2,:), 'g', 'LineWidth', 1);
-plot(T_X(1:test_N),  pos_inekf(2,:), 'r', 'LineWidth', 1);
+shadedErrorBar(T_X(1:test_N), pos_ekf(2,:), 3*std_ekf(2,:), 'lineProps', {'g', 'LineWidth', 1})
+shadedErrorBar(T_X(1:test_N), pos_inekf(2,:), 3*std_inekf(2,:), 'lineProps', {'r', 'LineWidth', 1})
 legend('Y_{GPS}','Y_{GT}','Y_{EKF}', 'Y_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-250,350])
 %
@@ -117,9 +129,18 @@ subplot(3,1,3);
 hold on;
 plot(t_gps, XYZ_GPS(meas_used,3), 'b', 'LineWidth', 1);
 plot(t_gt, z_gt, 'k--', 'LineWidth', 2);
-plot(T_X(1:test_N),  pos_ekf(3,:), 'g', 'LineWidth', 1);
-plot(T_X(1:test_N),  pos_inekf(3,:), 'r', 'LineWidth', 1);
+shadedErrorBar(T_X(1:test_N), pos_ekf(3,:), 3*std_ekf(3,:), 'lineProps', {'g', 'LineWidth', 1})
+shadedErrorBar(T_X(1:test_N), pos_inekf(3,:), 3*std_inekf(3,:), 'lineProps', {'r', 'LineWidth', 1})
 legend('Z_{GPS}','Z_{GT}','Z_{EKF}', 'Z_{InEKF}', 'Location', 'eastoutside');
 axis([0,T_X(test_N),-30,60])
 
 
+function u = unskew(ux)
+    u(1,1) = -ux(2,3);
+    u(2,1) = ux(1,3);
+    u(3,1) = -ux(1,2);
+end
+
+function w = Log(R)
+    w = unskew(logm(R));
+end

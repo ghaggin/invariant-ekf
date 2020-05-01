@@ -3,7 +3,8 @@ clear; close all;
 addpath('filters');
 addpath('helper');
 addpath('thirdparty/shadedErrorBar');
-
+set(0, 'DefaultTextInterpreter', 'latex');
+set(0, 'DefaultLegendInterpreter', 'latex');
 [T_X, omega, accel, accel_b, T_GPS, XYZ_GPS] = loadPoseGPS();
 
 % rx = rotx(95.538828);

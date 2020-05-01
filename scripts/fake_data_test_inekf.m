@@ -83,7 +83,8 @@ R0 = init.R0;
 % Note: the polynomial function created by 
 % gen_fake_data almost definitely wont be zero
 % at t = 0
-ekf = LIEKF(R0, p0, v0)
+ekf = LIEKF(init.R0, init.p0, init.v0, ...
+    eye(3)*.01, eye(3)*.01, eye(3)*.01, eye(3)*.01, eye(3)*.01);
 %--------------------------------------------------------------
 
 %--------------------------------------------------------------
