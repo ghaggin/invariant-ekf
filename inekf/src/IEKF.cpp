@@ -7,19 +7,22 @@
 #include <iostream>
 
 using namespace std::chrono;
+using namespace Eigen;
 using std::cos;
 using std::pow;
 using std::sin;
-using namespace Eigen;
-using namespace iekf;
 
+namespace iekf
+{
+// Shortand for matrices and vectors
+// consistent with Eigen
 using Matrix5d = IEKF::Matrix5d;
-using Matrix9d = Eigen::Matrix<double, 9, 9>;
 using Matrix15d = IEKF::Matrix15d;
-using Timestamp = IEKF::Timestamp;
+using Matrix9d = Eigen::Matrix<double, 9, 9>;
 using Vector5d = Eigen::Matrix<double, 5, 1>;
 using Vector6d = Eigen::Matrix<double, 6, 1>;
 using Vector9d = Eigen::Matrix<double, 9, 1>;
+using Timestamp = IEKF::Timestamp;
 
 void IEKF::resetFilter(const Timestamp& time, const Vector3d& origin_lla)
 {
@@ -41,7 +44,7 @@ void IEKF::prediction(
     const Vector3d& w = gyro - bias_.block<3, 1>(0, 0);
     const Vector3d& a = acc - bias_.block<3, 1>(3, 0);
 
-    Vector3d g = (Vector3d() << 0, 0, -9.81).finished();
+    Vector3d g{0, 0, -9.81};
 
     Matrix3d Rk1 = Rk * gamma0(w * dt);
     Vector3d vk1 = vk + Rk * gamma1(w * dt) * a * dt + g * dt;
@@ -106,7 +109,7 @@ void IEKF::correction(const Vector3d& gps_lla)
 
     mu_ = mu_ * xi.exp();
     bias_ = bias_ + delta_B;
-    auto& Id15 = Matrix15d::Identity();
+    const auto& Id15 = Matrix15d::Identity();
     Sigma_ = (Id15 - K * H) * Sigma_ * (Id15 - K * H).transpose() +
              K * N * K.transpose();
 }
@@ -134,3 +137,5 @@ std::tuple<Matrix5d&, Matrix15d&, Timestamp&> IEKF::getState()
 {
     return std::tie(mu_, Sigma_, time_);
 }
+
+}  // namespace iekf
