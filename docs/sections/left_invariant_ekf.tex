@@ -1,0 +1,290 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{State Representation in $SE_2(3)$}
+Our goal is to track the robots orientation, velocity, and position over time. We define this state and the estimation error in $SE_2(3)$ because the error dynamics have the properties of logarithm-linearity and autonomy. Thus, the state variable $\mathbf{X}_t$, containing the orientation $\mathbf{R}(t)$, velocity $\mathbf{v}(t)$ in body frame, and the position $\mathbf{p}(t)$ in world frame, is defined as:
+\begin{gather*}
+    \mathbf{X}_t =
+    \begin{bmatrix}
+        \mathbf{R}(t) & \mathbf{v}(t) & \mathbf{p}(t) \\
+        \mathbf{0}_{1 \times 3} & 1 & 0 \\
+        \mathbf{0}_{1 \times 3} & 0 & 1
+    \end{bmatrix}
+\end{gather*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{IMU and Gyro System Dynamics}
+Firstly, without taking IMU bias into account, we only add a white Gaussian noise:
+\begin{align}
+    & \tilde{\mat{\omega}}_t = \mat{\omega}_t + \mat{w}^g_t 
+    & \mat{w}^g_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^g)\\
+    & \tilde{\mat{a}}_t = \mat{a}_t + \mat{w}^a_t
+    & \mat{w}^a_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^a)
+\end{align}
+where $\tilde{\mat{\omega}}_t$ and $\tilde{\mat{a}}_t$ are the measured angular velocity from the gyroscope and measured linear acceleration from the accelerometer.
+
+Using IMU measurements, the continuous-time system dynamics can be represented as:
+\begin{align}
+    & \frac{d}{dt}\mat{R}_t = \mat{R}_t[\tilde{\mat{\omega}}_t - \mat{w}^g_t]_\times \label{eqn:rot_dyn}\\
+    & \frac{d}{dt}\mat{v}_t = \mat{R}_t(\tilde{\mat{a}}_t-\mat{w}^a_t) + \mat{g} \label{eqn:vel_dyn}\\
+    & \frac{d}{dt}\mat{p}_t = \mat{v}_t \label{eqn:pos_dyn}
+\end{align}
+%could be deleted if no room~~~~~~~~~
+Collecting terms in matrix form and writing the process model with respect to current state $X_t$ yields:
+\begin{multline}
+    \frac{d}{dt}\mat{X}_t =
+    \begin{bmatrix}
+        \mat{R}_t[\tilde{\mat{\omega}_t}]_\times & \mat{R}_t\tilde{\mat{a}_t} + g & \mat{v}_t \\
+        \mat{0}_{1 \times 3} & 0 & 0 \\
+        \mat{0}_{1 \times 3} & 0 & 0
+    \end{bmatrix}
+    - \\
+    \begin{bmatrix}
+        \mat{R}_t & \mat{v}_t & \mat{p}_t \\
+        \mat{0}_{1 \times 3} & 1 & 0 \\
+        \mat{0}_{1 \times 3} & 0 & 1 
+    \end{bmatrix}
+    \begin{bmatrix}
+        [\mat{w}^g_t]_\times & \mat{w}^a_t & \mat{0}_{3,1} \\
+        \mat{0}_{1 \times 3} & 0 & 0 \\
+        \mat{0}_{1 \times 3} & 0 & 0
+    \end{bmatrix}\\
+     = f_{u_t}(\mat{X}_t) - \mat{X}_t\mat{w}_t^\wedge
+\end{multline}
+where $\mat{w}_t \triangleq [\mat{w}^g_t, \mat{w}^a_t, \mat{0}_{1x3}]^T$.
+%could be deleted if no room~~~~~~~~~
+
+For the hybrid robot estimation problem with continuous-time motion model and discrete-time observation model, we discretized the above continuous-time system dynamics Eqns.~(\ref{eqn:rot_dyn}, \ref{eqn:vel_dyn}, \ref{eqn:pos_dyn}). With the assumption that the angular velocity and the linear acceleration remain unchanged over a short period $\Delta t$, we can write the discrete process model from step $k$ to $k+1$ as the following:
+\begin{align}
+    & \mat{R}_{k+1} = \mat{R}_k \mat{\Gamma}_0 (\mat{\omega}_k \Delta t) \\
+    & \mat{v}_{k+1} = \mat{v}_k + \mat{R}_k \mat{\Gamma}_1 (\mat{\omega}_k \Delta t) \mat{a}_k \Delta t + \mat{g} \Delta t \\
+    & \mat{p}_{k+1} = \mat{p}_k + \mat{v}_k \Delta t + \mat{R}_k \mat{\Gamma}_2 (\mat{\omega}_k \Delta t) \mat{a}_k \Delta t^2 + \frac{1}{2}\mat{g} \Delta t^2
+\end{align}
+%\tilde{\mat{\omega}}_t = \mat{\omega}_t + \mat{w}^g_t 
+where $\mat{\omega}_k = \tilde{\mat{\omega}}_k-\mat{w}^g_k$ and $\mat{a}_k = \tilde{\mat{a}}_k-\mat{w}^a_k$. $\mat{w}^g_k$ and $\mat{w}^a_k$ are the white noise of motion model for the angular velocity and linear acceleration respectively. The derivation of $\Gamma_i$ functions are explained in detail in Appendix \ref{sec:dyn_sec} and used here to get the state transition matrices:
+%could be deleted if no room~~~~~~~~~
+\begin{align}
+    & \mat{\Gamma}_0(\phi) = \mat{I}_3 + \frac{\sin(\norm{\mat{\phi}})}{\norm{\mat{\phi}}}[\mat{\phi}]_\times 
+    + \frac{1-\cos(\norm{\mat{\phi}})}{\norm{\mat{\phi}}^2}[\mat{\phi}]^2_\times \\
+    & \mat{\Gamma}_1(\mat{\phi}) = \mat{I}_3 + \frac{1-\cos(\norm{\mat{\phi}})}{\norm{\mat{\phi}}^2}[\mat{\phi}]_\times\nonumber\\
+    & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+    + \frac{\norm{\mat{\phi}}-\sin(\norm{\mat{\phi}})}{\norm{\mat{\phi}}^3}[\phi]^2_\times \\
+    & \mat{\Gamma}_2(\mat{\phi}) = \frac{1}{2}\mat{I}_3 + \frac{\norm{\mat{\phi}}-\sin(\norm{\mat{\phi}})}{\norm{\mat{\phi}}^3}[\mat{\phi}]_\times\nonumber\\
+    & \quad\quad\quad\quad\quad\quad\quad\quad\quad +\frac{\norm{\mat{\phi}}^2+2\cos(\norm{\mat{\phi}})-2}{2\norm{\mat{\phi}}^4}[\mat{\phi}]^2_\times
+\end{align}
+Where $\mat{\Gamma}_0(\mat{\phi})$ is the exponential map of SO(3), and $\mat{\Gamma}_1(\mat{\phi})$ is the left Jacobian of SO(3).
+%could be deleted if no room~~~~~~~~~
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Error Dynamics}
+
+With measurements coming from GPS in global frame, We choose the left invariant error $\mathbf{\eta}^l_t$:
+\begin{align*}
+    & \mat{\eta}^l_t = \textbf{X}_t^{-1}\Bar{\textbf{X}_t} = (\textbf{L}\Bar{\textbf{X}_t})^{-1}(\textbf{L}\textbf{X}_t)
+\end{align*}
+With Lie group action, we get corresponding error in Lie algebra:
+%eqns1
+\begin{align}
+    & \mat{\eta}^l_t = \exp([\mat{\xi}^l_t]_{\times})
+\end{align}
+where $\exp([\mat{\xi}^l_t]_{\times})\approx I + [\mat{\xi}^l_t]_{\times}$, and the $\approx$ should be $=$ from the logarithm-linear property of error in Lie group.
+
+The skew operator $[\cdot]_\times$ :  $\mathbb{R}^9 \rightarrow \mathfrak{se}_2(3)$ is a mapping from vector basis to Lie algebra matrix basis. It is defined as:
+\begin{equation}
+    [\mat{\xi}]_\times = 
+    \begin{bmatrix}
+    [\mat{\xi}^R]_\times & \mat{\xi}^v & \mat{\xi}^p \\
+    \mat{0}_{1 \times 3} & 0 & 0 \\
+    \mat{0}_{1 \times 3} & 0 & 0 \\
+    \end{bmatrix}
+\end{equation}
+Where the $[\mat{a}]_\times$ operator for $\mat{\xi}^R$ denotes the transformation $\mathbb{R}^3 \rightarrow so(3)$:
+\begin{equation}
+    \mat{a} =  
+    \begin{bmatrix}
+        a_1 \\ a_2 \\ a_3 
+    \end{bmatrix} \implies
+    [\mat{a}]_\times = 
+    \begin{bmatrix}
+        0 & -a_3 & a_2 \\
+        a_3 & 0 & -a_1 \\
+        -a_2 & a_1 & 0 \\
+    \end{bmatrix}
+\end{equation}
+
+In order to find the error dynamics equation in Lie algebra as the following form with $\mat{w}_t$ as the motion noise and its covariance defined as $\mat{Q}_t$:
+\begin{align}
+    & \frac{d}{dt}[\mat{\xi}^l_t]_{\times}  = A^l_t[\mat{\xi}^l_t]_{\times} + \mat{w_t}
+\end{align}
+we substitute the above elegant linear equation into system dynamics equations and obtain the error Jacobian matrix $\mat{A}_t$:
+\begin{align}
+    & \mat{A}^l_t = 
+    \begin{bmatrix}
+    -[\hat{\mat{\omega}_t}]_\times & \mat{0} & \mat{0} \\
+    -[\hat{\mat{a}}_t]_\times & -[\hat{\mat{\omega}}_t]_\times & \mat{0} \\
+    \mat{0} & \mat{I}_{3 \times 3} & -[\hat{\mat{\omega}}_t]_\times \\
+    \end{bmatrix} 
+\end{align}
+
+Therefore the covariance of the left invariant error could be computed through Riccati equation:
+\begin{equation}
+    \frac{d}{dt}\mat{P}_t=\mat{A}_t\mat{P}_t+\mat{P}_t\mat{A}_t^T+\mat{Q}_t
+\end{equation}
+
+%While the inverse operation would be wedge operator $(\cdot)^\vee : \mathfrak{g} \rightarrow \mathbb{R}^9$, defined by:
+%\begin{equation}
+%    Ad_{\mat{X}_t} = 
+%    \begin{bmatrix}
+%        \mat{R} & \mat{0} & \mat{0} \\
+%        (\mat{v}_t)_\times\mat{R}_t & \mat{R}_t & \mat{0} \\
+%        (\mat{p}_t)_\times\mat{R}_t & \mat{0} & \mat{R}_t
+%    \end{bmatrix}
+%\end{equation}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Left-invariant observation model}
+In order to get a invariant observation model in Lie group, we rearrange every measurement from GPS as:
+%eqns2
+\begin{align}
+    & \textbf{Y}_k = \textbf{X}_k \mat{b} + \textbf{V}_k \\
+    & \begin{bmatrix}
+        x_{gps} \\ y_{gps} \\ z_{gps} \\ 0 \\ 1
+      \end{bmatrix} =
+      \begin{bmatrix}
+        \mat{R}_k & \mat{v}_k & \mat{p}_k \\
+        \mat{0} & 1 & 0 \\
+        \mat{0} & 0 & 1 \\
+      \end{bmatrix}
+      \begin{bmatrix}
+        0 \\ 0 \\ 0\\ 0 \\ 1
+      \end{bmatrix} +
+      \begin{bmatrix}
+        \mat{q}_k \\ 0 \\ 0
+      \end{bmatrix}
+\end{align}
+where $\mat{q}_k$ is measurement white noise with covariance $\mat{\Sigma}^q$.
+
+To fit in the Kalman filter correction model, we calculate the Jacobian H by:
+\begin{multline}
+    \mat{H}\mat{\xi^r_t} = \mat{\xi^r_t} \mat{b} = 
+    \begin{bmatrix}
+       \mat{\xi^R_t} & \mat{\xi^{v}_t} & \mat{\xi^{p}_t}  \\
+       \mat{0}       & 0         & 0 \\
+       \mat{0}       & 0         & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mat{0} \\
+        0 \\
+        1
+    \end{bmatrix}\\
+    =
+    \begin{bmatrix}
+        \mat{0}_{3 \times 3} & \mat{0}_{3 \times 3} & \mat{I}_{3 \times 3} \\
+        \mat{0}_{1 \times 3} & \mat{0}_{1 \times 3} & \mat{0}_{1 \times 3} \\
+        \mat{0}_{1 \times 3} & \mat{0}_{1 \times 3} & \mat{0}_{1 \times 3} 
+    \end{bmatrix}
+    \begin{bmatrix}
+         \mat{\xi^R_t} \\
+         \mat{\xi^v_t} \\
+         \mat{\xi^p_t}
+    \end{bmatrix}
+\end{multline}
+
+Considering computational efficiency, we choose H in its reduced form (Eq. \ref{eqn:H}) and the corresponding compensation is made later when calculating the Kalman gain.
+\begin{equation}
+    \label{eqn:H}
+    \mat{H} = 
+    \begin{bmatrix}
+    \mat{0} & \mat{0} & \mat{I}_{3 \times 3}
+    \end{bmatrix}
+\end{equation}
+
+In the correction step, an innovation vector is found to quantify new information:  
+%eqns3
+\begin{align}
+    \mat{\nu}_k = \bar{\mat{X}}^{-1}_k \mat{Y}_k - b
+\end{align}
+
+After substituting the relationship between state and error in Lie algebra, we got the covariance of innovation as:
+\begin{equation}
+    \mat{S}_k=\mat{H}_k\bar{\mat{P}}_k\mat{H}_k^T+\bar{\mat{N}}_k
+\end{equation}
+where $\bar{\mat{N}}_k$ is the reduced form of $\mat{N}_k$:
+\begin{align}
+    & \mat{N}_k=\bar{\mat{X}}_k^{-1}
+    \begin{bmatrix}
+    \mat{\Sigma}^{q} & & \\
+    & \mat{0} & \\
+    & & \mat{0} \\
+    \end{bmatrix} 
+    \bar{\mat{X}}_k\\
+    & \bar{\mat{N}}_k=\bar{\mat{R}}_k^T\mat{\Sigma}^q\bar{\mat{R}}_k
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Including IMU Biases}
+In actual application, IMU usually has biases which corrupt the measurements progressively. Hence we modify the input of IMU system dynamics model as below:
+\begin{align}
+    & \tilde{\mat{\omega}}_t = \mat{\omega}_t + \mat{b}^g_t + \mat{w}^g_t 
+    & \mat{w}^g_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^g) \\
+    & \tilde{\mat{a}}_t = \mat{a}_t + \mat{b}^a_t + \mat{w}^a_t
+    & \mat{w}^a_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^a)
+\end{align}
+
+Since each bias term remains almost unchanged between every time step, we choose the Brownian motion model for bias dynamics: 
+\begin{align}
+    & \frac{d}{dt}\mat{b}^g_t = \mat{w}^{bg}_t 
+    & \mat{w}^{bg}_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^{bg}) \\
+    & \frac{d}{dt}\mat{b}^a_t = \mat{w}^{ba}_t
+    & \mat{w}^{ba}_t \sim \mathcal{GP}(\mat{0}_{3,1},\Sigma^{ba})
+\end{align}
+
+We combine all biases in a single vector (Eq. \ref{eqn:bias}), and augment the error vector with the error in lie algebra (Eq. \ref{eqn:bias_aug}) instead of the state directly to avoid dimensional inconsistency. Then we found the new error Jacobian matrix $\mat{A}^l_t$, and compared the result with that in the paper of Hartley \cite{hartley2020iekf}.
+\begin{align}
+    &  \mat{\theta}_k \triangleq 
+        \begin{bmatrix}
+            b^g_t \\ b^a_t
+        \end{bmatrix}
+        \in \mathbb{R}^6
+    &\label{eqn:bias}\\
+    & \frac{d}{dt}\bmat{\mat{\xi}_t\\\mat{\zeta}_t}=\mat{A}_t\bmat{\mat{\xi}_t\\\mat{\zeta}_t} + \mat{w}_t
+    &\label{eqn:bias_aug}\\
+    & \mat{A}^l_t = 
+    \begin{bmatrix}
+    -[\hat{\mat{\omega}_t}]_\times & \mat{0} & \mat{0} & -\mat{I}_{3 \times 3} & \mat{0} & \\
+    -[\hat{\mat{a}}_t]_\times & -[\hat{\mat{\omega}}_t]_\times & \mat{0} & \mat{0} & -\mat{I}_{3 \times 3} \\
+    \mat{0} & \mat{I}_{3 \times 3} & -[\hat{\mat{\omega}}_t]_\times & \mat{0} & \mat{0} \\
+    \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} \\
+    \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}
+    \end{bmatrix}
+\end{align}
+where $\mat{w}_t \triangleq [\mat{w}^g_t, \mat{w}^a_t, \mat{0}_{1 \times 3}, \mat{w}^{bg}_t, \mat{w}^{ba}_t]^T$ and its covariance is defined as $\mat{Q}_t$
+
+With the bias term corrected, the system dynamics and the prediction model now become:
+\begin{align}
+    & \bar{\mat{R}}_{k+1} = \mat{R}_{k} \mat{\Gamma}_0 (\bar{\mat{\omega}}_k \Delta t) \\
+    & \bar{\mat{v}}_{k+1} = \mat{v}_k + \mat{R}_{k} \mat{\Gamma}_1 (\bar{\mat{\omega}}_k \Delta t) \bar{\mat{a}}_k \Delta t + \mat{g} \Delta t \\
+    & \bar{\mat{p}}_{k+1} = \mat{p}_k + \mat{v}_k \Delta t + \mat{R}_{k} \mat{\Gamma}_2 (\bar{\mat{\omega}}_k \Delta t) \bar{\mat{a}}_k \Delta t^2 + \frac{1}{2}\mat{g} \Delta t^2\\
+    &\bar{\mat{\theta}}_k = \mat{\theta}_{k-1}\\
+    & \bar{\mat{P}}_k=\mat{\Phi}_k\mat{P}_{k-1}\mat{\Phi}_k^T + \mat{\Phi}_k\mat{Q}_{t}\mat{\Phi}_k^T\Delta t
+\end{align}
+where $\mat{\Phi}_k=\exp(\mat{A}_t\Delta t)$ is the state transition matrix, $\bar{\mat{\omega}}_k = \tilde{\mat{\omega}}_k-\mat{w}^g_k$ and $\bar{\mat{a}}_k = \tilde{\mat{a}}_k-\mat{w}^a_k$ are the bias-corrected input, $\mat{w}^g_k$ and $\mat{w}^a_k$ are the bias terms for the angular velocity and linear acceleration respectively.
+
+After biases appended, we manually add two zero components to the Jacobian H to account for the bias term and update them simultaneously with the state by partitioning the Kalman gain in two parts:
+\begin{align}
+    & \mat{H}_t = 
+    \begin{bmatrix}
+        \mat{0} & \mat{0} & \mat{I}_{3 \times 3} & \mat{0} & \mat{0}
+    \end{bmatrix}\\
+    &     \mat{S}_k=\mat{H}_k\bar{\mat{P}}_k\mat{H}_k^T+\bar{\mat{N}}_k\\
+    & \mat{K}_k=\bmat{\mat{K}_k^\xi\\\mat{K}_k^\zeta}=\bar{\mat{P}}_k\mat{H}_k^T\mat{S}_k^{-1}
+\end{align}
+
+Then the final bias-corrected correction model is:
+\begin{align}
+    \mat{X}_k&=\bar{\mat{X}}_k\exp[\mat{K}_k^\xi\Pi(\bar{\mat{X}}_k^{-1}\mat{Y}_k)]\\
+    \mat{\theta}_k&=\bar{\mat{\theta}_k}+\mat{K}_k^\zeta\Pi(\bar{\mat{X}}_k^{-1}\mat{Y}_k)\\
+    \mat{P}_k&=(\mat{I}-\mat{K}_k\mat{H}_k)\bar{\mat{P}_k}(\mat{I}-\mat{K}_k\mat{H}_k)^T+\mat{K}_k\bar{\mat{N}_k}\mat{K}_k^T
+\end{align}
+where $\mat{\Pi} = [\mat{I}_{3 \times 3},  \mat{0}_{3 \times 2}]$ is a constant matrix to eliminate effects from truncating zero rows in $\mat{H}$.
+
+What also should be noted here is the estimated covariance is in the Lie algebra, and we need to transfer it to the Cartesian space to plot the uncertainty, for which one way is to use the unscented transform and get the covariance in Cartesian space by propagating the corresponded vector in Lie algebra of estimated state.

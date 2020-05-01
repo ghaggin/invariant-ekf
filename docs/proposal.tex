@@ -1,0 +1,58 @@
+\documentclass{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage[flushleft]{threeparttable}
+\usepackage[linkcolor=black,citecolor=black,colorlinks=true]{hyperref}
+
+\title{Left-Invariant EKF for Robot State Estimation:\\%
+A Mobile Robotics Project Proposal}
+\author{Sean Boylan, Cheng Jiang, Glen Haggin, Juhan Wang, Xuran Zhao\\
+University of Michigan\\
+\texttt{\{sboylan, chengjia, ghaggin, juhanw, xuranzh\}@umich.edu}
+}
+\date{March 2020}
+%
+\begin{document}
+\maketitle
+\section{Introduction}
+The process model of a 6 degree of freedom vehicle is nonlinear, and there is no general method to design a globally stable observer.  Historically, methods have relied on linearizing the process model by using first order approximations (EKF) or performing an unscented transform (UKF)\cite{thrun2005probabilistic}. %also particle filer? add citations - we can just use probabilistic robotics here right TODO
+For nonlinear process that are group affine, it is possible to design an invariant observer with guaranteed global convergence\cite{InEKF_Barrau}. We propose the design of an Invariant EKF that uses an inertial measurement unit (IMU) and a gyroscope for prediction and GPS/Mocap and gravity for an update. This filter will measure the full state of the rigid body, including the position, velocity, and orientation. The filter will be designed and tested using a published data set and implemented on a small racing quadrotor equipped with similar sensors.
+%
+\section{Methods}
+%overview of inekf and ekf
+The InEKF has error dynamics following a log-linear autonomous differential equation independent of current state, one of the most salient advantages of this filter. Another benefit is the exact mapping from linear error in lie group to nonlinear error in cartesian space, whereas the regular EKF fails to achieve this, but regular EKF with its remarkable efficiency, still regarded as one ideal online observer. Though with global observation via GPS, our filter is a left-invariant EKF, we will demonstrate it's not difficult to switch invariant EKF between left and right, thus making it convenient for body-fixed observations.
+%
+\section{Data}
+There are many publicly available datasets and we will use one that focuses on high speed flight with small sensors.  Working with widely available micro electronics will provide an additional challenge due their reduced accuracy, however, the project will be accessible to a larger audience. The datasets that we are considering are listed in Table \ref{tab:data}.  Ideally we would prefer to have a data set that includes both GPS and an accurate ground truth measurement from motion capture, but we were unable to find one that perfectly fit desired criteria.  One additional option would be to generate our own data set using a vehicle equipped with a sensor suite that is available to group.  This vehicle could be equipped with a GPS unit and flown in the MAir facility which is outfitted with a highly accurate motion capture system.
+\begin{table}[h]
+    \centering
+    \caption{UAV datasets comparison}\label{tab:data}
+    \begin{tabular}{c|ccccc}\hline
+        Dataset & IMU & Camera &  GPS & MoCap\\\hline
+        Blackbird \cite{antonini2018blackbird} & x & x &  & x\\
+        ETH Zurich\cite{ETHZ_DroneRacing} &  x & x &  &   \\
+        Zurich Urban \cite{majdik2017zurich}&x & x & x & \\
+        EuRoC MAV\cite{burri2016euroc} & x & x & &x\\
+        Fast Flight\cite{sun2018robust}&x & x & x* &\\\hline
+    \end{tabular}\\
+    {\small$*$ not synchronized}
+\end{table}
+Currently, Both Blackbird and Zurich Urban seem to be promising datasets to use since they provide the most types of sensor measurements. Blackbird is an indoor dataset while Zurich Urban is an outdoor one.
+%
+\section{Deliverables}
+The aim of the project is to implement both InEKF and regular EKF on a published dataset chosen from the table \ref{tab:data} and compare their results. InEKF will be implemented by ourselves. Regular EKF/UKF will either come from an open source library or implemented by us. The filters will then be implemented and tested on a quadrotor with similar sensors. Initial tests and demonstrations will be performed in MATLAB and the final project will be implemented as a C++ library.
+%
+\section{Discussion}
+Currently, one confusion is that the datasets available are mostly using GPS data as the ground truth, while we propose to treat it as one of the measurement data together with IMU. Possible solutions for this issue are:
+\begin{itemize}
+    \item To add a small amount of noise in GPS data provided and then used it as measurement. Then the GPS data without noise could be used as ground truth to compare with.
+    \item To use GPS data as measurement while using smoothed trajectory as ground truth to compare with.
+    \item To collect our own dataset containing both GPS (as measurement) and Mocap (as ground truth).
+\end{itemize}
+Further reading and discussion are needed to decide how to solve this issue.
+%
+\bibliographystyle{unsrt}
+\bibliography{references}
+%
+\end{document}
+

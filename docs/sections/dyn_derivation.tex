@@ -1,0 +1,79 @@
+The continuous time differential equations which govern the motion of the rigid body are
+\begin{align}
+    \frac{d}{dt}\mat{R} &= \mat{R}[\mat{\omega}]_\times \label{eqn:dyn1}\\
+    \frac{d}{dt}\mat{v} &= \mat{R}\mat{a} + \mat{g} \label{eqn:dyn2}\\
+    \frac{d}{dt}\mat{p} &= \mat{v} \label{eqn:dyn3}
+\end{align}
+where $\mat{R}$ is the rotation of the body with respect to the world frame on SO(3), $\mat{\omega}$ is the angular velocity of the body frame with respect to the world frame, $\mat{v}$ is the linear velocity, $\mat{a}$ is the acceleration measured in the body frame, $\mat{g}$ is the local gravity, and $\mat{p}$ is the position of the vehicle.
+
+The imu measurements occur in discrete increments and the time between measurements is denoted $\Delta t$. Since we have no knowledge of the acceleration and the angular rate between measurements, we are unable to exactly integrate the continuous time dynamics.  To make the problem tractable, we assume that the acceleration and rates are constant between measurements, and take the last measured value throughout the time period $\Delta t$.  Under this assumption, we can derive a exact state transition equations for $\mat{R}$, $\mat{p}$, and $\mat{v}$ between measurements using Eqns.~(\ref{eqn:dyn1})-(\ref{eqn:dyn3}).
+
+One might be tempted to directly integrate Eqn.~(\ref{eqn:dyn2}) under the assumption of a constant $\mat{R}$.  This assumption is not valid since from Eqn.~(\ref{eqn:dyn1}), we can see that $\mat{R}$ is in fact time varying with a constant $\mat{\omega}$.  The following derivation takes the time varying nature of $\mat{R}$ into account when integrating Eqn.~(\ref{eqn:dyn2}).
+
+We can first note that the solution to Eqn.~(\ref{eqn:dyn1}) is simply the matrix exponential function, since $[\mat{\omega}]_\times$ is a constant matrix.
+\begin{align}
+    \mat{R}(t) = \mat{R}_0\exp([\mat{\omega}]_\times t) \label{eqn:R_sol})
+\end{align}
+Using the Rodriguez rotation formula, we can rewrite Eqn.~(\ref{eqn:R_sol}) in a format that will be easier to integrate in the other dynamics equations.
+\begin{align}
+    \mat{R}(t) &= \mat{R}_0 \left[\mat{I} + \frac{\sin(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega}\Vert}[\mat{\omega}]_\times + \frac{1 - \cos(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega}\Vert^2}[\mat{\omega}]_\times^2\right] \nonumber\\
+    &= R_0 \mat{\Gamma}_0(t)
+\end{align}
+Here we denote the bracketed expression as $\mat{\Gamma}_0 (t)$ and notice that all matrices are constants multiplied by scalar trigonometric functions.
+
+Now, writing the velocity dynamics in terms of $R(t)$, we get
+\begin{align}
+    \frac{d}{dt} v &= \mat{R}(t)\mat{a} + \mat{g} \\
+    \frac{d}{dt} v &= \mat{R}_0\mat{\Gamma}_0(t)\mat{a} + \mat{g}
+\end{align}
+Integrating this with respect to time, we find
+\begin{align}
+    \mat{v}(t) = R_0 \left(\int \mat{\Gamma}_0(t) dt\right) + \mat{g}t + C_1 \label{eqn:v_indef}
+\end{align}
+where
+\begin{multline}
+    \int\mat{\Gamma}_0(t) dt =\\\mat{I}t + \frac{-\cos(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega}\Vert^2}[\mat{\omega}]_\times + \frac{\Vert\mat{\omega} t\Vert - \sin(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega} \Vert^3}[\mat{\omega}]_\times{}^2
+\end{multline}
+Solving for C in Eqn.~(\ref{eqn:v_indef}),
+\begin{align}
+    \mat{v}(0) = \mat{v}_0 = -\frac{[\mat{\omega}]_\times}{\Vert\mat{\omega}\Vert^2} + C_1
+\end{align}
+And plugging this into (\ref{eqn:v_indef}),
+\begin{align}
+    \mat{v}(t) = \mat{R}_0\mat{\Gamma}_1(t)\mat{a}t + \mat{g}t + \mat{v}_0
+\end{align}
+with
+\begin{align}
+    \mat{\Gamma}_1(t)t = \mat{I}t + &\frac{1-\cos(\Vert\mat{\omega t}\Vert)}{\Vert\mat{\omega }\Vert^2}[\mat{\omega} ]_\times + \frac{\Vert\mat{\omega}\Vert - \sin(\Vert\mat{\omega t} \Vert)}{\Vert\mat{\omega}\Vert^3}[\mat{\omega}]_\times{}^2
+\end{align}
+Note that we specify $\mat{\Gamma}_1(t) t$, which is $\mat{\Gamma}_1$ as a function of $t$ times the variable $t$.  We use this expression so that the next integral is clearer.  In the paper, we remove the factor of $t$ from the function to make the equation clearer and in terms of $\mat{\omega} t$ as a unit.
+
+Now we can integrate the position dynamics.
+\begin{align}
+    \frac{d}{dt}\mat{p} &= \mat{R}_0\mat{\Gamma}_1(t)\mat{a}t + \mat{g}t + \mat{v}_0 \\
+    \mat{p} &= \mat{R}_0 \left(\int \mat{\Gamma}_1(t)t\ dt\right)\mat{a} + \frac{1}{2}\mat{g}t^2 + \mat{v}_0t + C_2 \label{eqn:p_indef}
+\end{align}
+where
+\begin{multline}
+    \int \mat{\Gamma}_1(t)t\ dt =
+    \frac{1}{2}\mat{I}t^2 + \frac{\Vert\mat{\omega} t\Vert - \sin(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega}\Vert^3}[\mat{\omega}]_\times +\\ \frac{\Vert\mat{\omega} t\Vert^2 + 2\cos(\Vert\mat{\omega} t\Vert)}{2\Vert\mat{\omega}\Vert^4}[\mat{\omega} ]_\times{}^2
+\end{multline}
+Solving for $C_2$ in (\ref{eqn:p_indef}),
+\begin{align}
+    \mat{p}(0) = \mat{p}_0 = \frac{[w]_\times^2}{\Vert w\Vert^4}+C_2
+\end{align}
+and plugging this back into (\ref{eqn:p_indef}),
+\begin{align}
+    \mat{p}(t) = \mat{R}_0\mat{\Gamma}_2(t)\mat{a}t^2 + \frac{1}{2}\mat{g}t^2 + \mat{v}_0t + \mat{p}_0
+\end{align}
+with
+\begin{multline}
+    \mat{\Gamma}_2(t) = \frac{1}{2}\mat{I} + \frac{\Vert\mat{\omega} t\Vert - \sin(\Vert\mat{\omega} t\Vert)}{\Vert\mat{\omega} t\Vert^3}[\mat{\omega} t]_\times +\\ \frac{\Vert\mat{\omega} t\Vert^2 + 2\cos(\Vert\mat{\omega} t\Vert) - 2}{2\Vert\mat{\omega} t\Vert^4}[\mat{\omega} t]_\times{}^2
+\end{multline}
+
+Thus, if we take the initial conditions to be at timestep $k$ and the value at $k+1$ to be the quantity of the state transition over time $\Delta t$, the discrete dynamical equations become
+\begin{align}
+    \mat{R}_{k+1} &= \mat{R}_{k}\exp([\mat{\omega}]_\times \Delta t) \\
+    \mat{v}_{k+1} &= \mat{R}_k \mat{\Gamma}_1(\mat{\omega} \Delta t) \mat{a} \Delta t + \mat{g} \Delta t + \mat{v}_k \\
+    \mat{p}_{k+1} &= \mat{R}_k \mat{\Gamma}_2(\mat{\omega} \Delta t) \mat{a} \Delta t^2 + \frac{1}{2}\mat{g}  \Delta t^2 + \mat{v}_k \Delta t + \mat{p}_k
+\end{align}

@@ -1,0 +1,23 @@
+The simulated data used for the tests shown in Sec.~(\ref{sec:simulation_results}) is listed here.  Each dimension of the angle or positional data is created from a randomly generated polynomial, where each coefficient is sampled from some random distribution.  Each polynomial is a 4th order polynomial and can be evaluated at any point in time.  The coefficients are listed in Tabs.~(\ref{tab:pos_coef}, \ref{tab:ang_coef}), with the first coefficient listed being the scalar multiplied by $x^4$ and the last being the constant ($x^0$ term).  This the default ordering that the Matlab function \texttt{polyval} expects. 
+
+\begin{table}[h]
+    \centering
+    \caption{Position ground truth random polynomial coefficients.}
+    \begin{tabular}{cl}
+        $x$: & \texttt{[13.862459 -16.814181 0.209844 -17.388540 -2.875107]} \\
+        $y$: & \texttt{[-16.138763 -14.913601 3.869812 -10.959520 -15.722173]}\\
+        $z$: & \texttt{[-11.187752 -6.006949 -1.288501 -11.930271 5.616269]}
+    \end{tabular}
+    \label{tab:pos_coef}
+\end{table}
+
+\begin{table}[h]
+    \centering
+    \caption{Angle ground truth random polynomial coefficients.}
+    \begin{tabular}{cl}
+        $x$: & \texttt{[-0.677207 0.209469 -4.524294 11.745498 3.200167]} \\
+        $y$: & \texttt{[-13.508056 8.030094 18.582043 0.000334 15.580803]}\\
+        $z$: & \texttt{[-6.335454 2.685765 -2.898161 -2.530109 11.062367]}
+    \end{tabular}
+    \label{tab:ang_coef}
+\end{table}

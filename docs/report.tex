@@ -1,0 +1,64 @@
+\documentclass{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{float}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\usepackage[flushleft]{threeparttable}
+\usepackage[urlcolor=black,linkcolor=black,citecolor=black,colorlinks=true]{hyperref}
+\usepackage{graphicx}
+\newcommand\bmat[1]{\begin{bmatrix}#1\end{bmatrix}}
+\newcommand{\mat}[1]{\boldsymbol{#1}}
+
+\title{Left-Invariant EKF for Robot Localization:\\%
+A Mobile Robotics Project}
+\author{Sean Boylan, Cheng Jiang, Glen Haggin, Juhan Wang, Xuran Zhao\\
+University of Michigan\\
+\texttt{\{sboylan, chengjia, ghaggin, juhanw, xuranzh\}@umich.edu}\\[1em]
+Github: \texttt{\href{https://github.com/ghaggin/invariant-ekf}{https://github.com/ghaggin/invariant-ekf}}\\
+YouTube: \texttt{\href{https://www.youtube.com/watch?v=SUFUShReSNg&t}{https://www.youtube.com/watch?v=SUFUShReSNg}}
+}
+%
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+
+\section{Introduction}
+\input{sections/introduction}
+
+%\section{Theoretical Background}
+%\input{sections/theoretical_background}
+% brief introduction of InEKF and theorems
+
+\section{bias-corrected Left-Invariant EKF}
+\input{sections/left_invariant_ekf}
+
+\section{Simulation Results} \label{sec:simulation_results}
+\input{sections/simulation_results}
+
+\section{C++ Implementation}
+\input{sections/cpp_impl}
+
+\section{Conclusion}
+\input{sections/conclusion}
+
+%
+\bibliographystyle{unsrt}
+\bibliography{references}
+%
+
+\begin{appendices}\label{appendices}
+
+\section{Derivation of Discrete Dynamics} \label{sec:dyn_sec}
+\input{sections/dyn_derivation}
+
+\section{Simulated Data} \label{sec:fake_data}
+\input{sections/fake_data}
+
+\end{appendices}
+
+\end{document}
+

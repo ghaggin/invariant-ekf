@@ -1,0 +1,6 @@
+In addition to the Matlab scripts, we provide a C++ implementation of the filter that is capable of running on a real system.  The implementation uses the Eigen library, which is a header only library for linear algebra.  Dependency and build information is listed on our Github\footnote{\href{https://github.com/ghaggin/invariant-ekf}{https://github.com/ghaggin/invariant-ekf}}, along with usage instructions.
+
+We verify the correctness of this implementation using an extensive testing suite.  Aside from simple checks on assumptions and basic input output, we compare the output of the filter in a number of conditions against the Matlab implementation.  For each of these test, we generate a combination of IMU and GPS measurements, and create an expected output from our Matlab filter.  Then, we run the C++ filter and compare the output to what was generated in Matlab.
+
+We also provide an example driver for the Zurich urban dataset, where red-black trees are used to order asynchronous measurements.
+
